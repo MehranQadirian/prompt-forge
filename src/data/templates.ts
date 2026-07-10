@@ -1,0 +1,68 @@
+import { PromptTemplate } from '../types';
+
+export const DEFAULT_TEMPLATES: PromptTemplate[] = [
+  {
+    id: 'tpl-creative-writing',
+    title: 'Creative Writing',
+    content: 'Write a creative piece about [topic] in [style] style. Tone: [tone].',
+    category: 'Writing',
+    tags: ['creative', 'writing'],
+    description: 'Generate creative writing with customizable style and tone',
+  },
+  {
+    id: 'tpl-code-review',
+    title: 'Code Review',
+    content: 'Review this code for bugs, performance, and best practices:\n\n[code]',
+    category: 'Development',
+    tags: ['code', 'review'],
+    description: 'Get comprehensive code review feedback',
+  },
+  {
+    id: 'tpl-email',
+    title: 'Professional Email',
+    content: 'Write a professional email to [recipient] about [purpose]. Tone: [tone].',
+    category: 'Business',
+    tags: ['email', 'professional'],
+    description: 'Draft professional emails with the right tone',
+  },
+  {
+    id: 'tpl-summarize',
+    title: 'Text Summarizer',
+    content: 'Summarize the following text in [length] sentences:\n\n[text]',
+    category: 'Writing',
+    tags: ['summary', 'writing'],
+    description: 'Condense text while preserving key information',
+  },
+  {
+    id: 'tpl-translate',
+    title: 'Translation',
+    content: 'Translate from [source_lang] to [target_lang]:\n\n[text]',
+    category: 'Language',
+    tags: ['translation', 'language'],
+    description: 'Translate with cultural awareness and nuance',
+  },
+  {
+    id: 'tpl-brainstorm',
+    title: 'Brainstorming',
+    content: 'Generate [number] creative ideas for [topic]. Goal: [goal].',
+    category: 'Ideas',
+    tags: ['brainstorm', 'ideas'],
+    description: 'Generate and evaluate creative ideas',
+  },
+  {
+    id: 'tpl-data-analysis',
+    title: 'Data Analysis',
+    content: 'Analyze this data and provide insights:\n\n[data]',
+    category: 'Analysis',
+    tags: ['data', 'analysis'],
+    description: 'Analyze data and extract meaningful insights',
+  },
+  {
+    id: 'tpl-learning',
+    title: 'Learning Tutor',
+    content: 'Explain [subject] at [level] level. Use analogies and examples.',
+    category: 'Education',
+    tags: ['learning', 'teaching'],
+    description: 'Personalized learning with adaptive explanations',
+  },
+];
