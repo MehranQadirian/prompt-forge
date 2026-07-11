@@ -8,6 +8,7 @@ import {
   Pressable,
   Keyboard,
   BackHandler,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -19,6 +20,8 @@ import * as Haptics from 'expo-haptics';
 import { BottomSheet, BottomSheetRef } from '../src/components/BottomSheet';
 import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE, TYPOGRAPHY } from '../src/constants';
 import { hapticLight } from '../src/constants/haptics';
+
+type DeleteModalView = 'confirm' | 'prompts' | 'reassign' | 'createCategory';
 
 export default function CategoriesScreen() {
   const router = useRouter();
@@ -37,27 +40,62 @@ export default function CategoriesScreen() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  // Single modal state
+  const [modalVisible, setModalVisible] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [reassignModalVisible, setReassignModalVisible] = useState(false);
-  const [reassignTarget, setReassignTarget] = useState<string | null>(null);
+  const [modalView, setModalView] = useState<DeleteModalView>('confirm');
+  const [newCategoryForMove, setNewCategoryForMove] = useState('');
 
   const inputRef = useRef<TextInput>(null);
   const editInputRef = useRef<TextInput>(null);
-  const deleteSheetRef = useRef<BottomSheetRef>(null);
-  const reassignSheetRef = useRef<BottomSheetRef>(null);
+  const modalRef = useRef<BottomSheetRef>(null);
+  const newCatInputRef = useRef<TextInput>(null);
+
+  // Affected prompts for the target category
+  const affectedPrompts = useMemo(() => {
+    if (!deleteTarget) return [];
+    return prompts.filter((p: Prompt) => p.category === deleteTarget);
+  }, [prompts, deleteTarget]);
 
   useEffect(() => {
-    if (deleteModalVisible) {
-      deleteSheetRef.current?.present();
+    if (modalVisible) {
+      modalRef.current?.present();
     }
-  }, [deleteModalVisible]);
+  }, [modalVisible]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (isCreating || editingId || modalVisible) {
+          setIsCreating(false);
+          setEditingId(null);
+          setModalVisible(false);
+          return true;
+        }
+        return false;
+      });
+      return () => handler.remove();
+    }, [isCreating, editingId, modalVisible])
+  );
 
   useEffect(() => {
-    if (reassignModalVisible) {
-      reassignSheetRef.current?.present();
+    if (isCreating) {
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
-  }, [reassignModalVisible]);
+  }, [isCreating]);
+
+  useEffect(() => {
+    if (editingId) {
+      setTimeout(() => editInputRef.current?.focus(), 300);
+    }
+  }, [editingId]);
+
+  useEffect(() => {
+    if (modalView === 'createCategory') {
+      setTimeout(() => newCatInputRef.current?.focus(), 300);
+    }
+  }, [modalView]);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -88,44 +126,12 @@ export default function CategoriesScreen() {
     return result;
   }, [prompts, customCategories]);
 
-  const affectedPrompts = useMemo(() => {
-    if (!deleteTarget) return [];
-    return prompts.filter((p: Prompt) => p.category === deleteTarget);
-  }, [prompts, deleteTarget]);
-
+  // Available categories for reassign (excluding target and 'Other')
   const reassignCategories = useMemo(() => {
     return categories.filter(
-      (cat) => cat.name !== reassignTarget && cat.name !== 'All'
+      (cat) => cat.name !== deleteTarget && cat.name !== 'All'
     );
-  }, [categories, reassignTarget]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const handler = BackHandler.addEventListener('hardwareBackPress', () => {
-        if (isCreating || editingId || deleteModalVisible || reassignModalVisible) {
-          setIsCreating(false);
-          setEditingId(null);
-          setDeleteModalVisible(false);
-          setReassignModalVisible(false);
-          return true;
-        }
-        return false;
-      });
-      return () => handler.remove();
-    }, [isCreating, editingId, deleteModalVisible, reassignModalVisible])
-  );
-
-  useEffect(() => {
-    if (isCreating) {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
-  }, [isCreating]);
-
-  useEffect(() => {
-    if (editingId) {
-      setTimeout(() => editInputRef.current?.focus(), 300);
-    }
-  }, [editingId]);
+  }, [categories, deleteTarget]);
 
   const handleCreate = useCallback(() => {
     const trimmed = newCategoryName.trim();
@@ -158,26 +164,68 @@ export default function CategoriesScreen() {
     Keyboard.dismiss();
   }, [editValue, editingId, categories, renameCustomCategory]);
 
-  const handleDelete = useCallback(() => {
+  // Delete flow handlers
+  const handleDeletePress = useCallback((name: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setDeleteTarget(name);
+    setModalView('confirm');
+    setModalVisible(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
     if (affectedPrompts.length === 0) {
+      // No prompts — delete directly
+      hapticLight();
       deleteCustomCategory(deleteTarget);
-      setDeleteModalVisible(false);
+      setModalVisible(false);
       setDeleteTarget(null);
     } else {
-      setDeleteModalVisible(false);
-      setReassignTarget(deleteTarget);
-      setReassignModalVisible(true);
+      // Has prompts — show prompts list
+      hapticLight();
+      setModalView('prompts');
     }
   }, [deleteTarget, affectedPrompts, deleteCustomCategory]);
 
+  const handleDeleteAll = useCallback(() => {
+    if (!deleteTarget) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    // Delete all prompts in this category
+    for (const p of affectedPrompts) {
+      const { deletePrompt } = usePromptStore.getState();
+      deletePrompt(p.id);
+    }
+    deleteCustomCategory(deleteTarget);
+    setModalVisible(false);
+    setDeleteTarget(null);
+  }, [deleteTarget, affectedPrompts, deleteCustomCategory]);
+
+  const handleMoveToCategory = useCallback(() => {
+    hapticLight();
+    setModalView('reassign');
+  }, []);
+
   const handleReassign = useCallback((to: string) => {
-    if (!reassignTarget) return;
-    reassignCategory(reassignTarget, to);
-    deleteCustomCategory(reassignTarget);
-    setReassignModalVisible(false);
-    setReassignTarget(null);
-  }, [reassignTarget, reassignCategory, deleteCustomCategory]);
+    if (!deleteTarget) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    reassignCategory(deleteTarget, to);
+    deleteCustomCategory(deleteTarget);
+    setModalVisible(false);
+    setDeleteTarget(null);
+  }, [deleteTarget, reassignCategory, deleteCustomCategory]);
+
+  const handleCreateCategoryForMove = useCallback(() => {
+    const name = newCategoryForMove.trim();
+    if (!name || !deleteTarget) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    addCustomCategory(name);
+    reassignCategory(deleteTarget, name);
+    deleteCustomCategory(deleteTarget);
+    setModalVisible(false);
+    setDeleteTarget(null);
+    setNewCategoryForMove('');
+    Keyboard.dismiss();
+  }, [newCategoryForMove, deleteTarget, addCustomCategory, reassignCategory, deleteCustomCategory]);
 
   const renderCategory = useCallback(({ item }: { item: { name: string; promptCount: number; isSystem: boolean } }) => (
     <View style={[styles.categoryRow, { borderBottomColor: c.outlineVariant }]}>
@@ -228,11 +276,7 @@ export default function CategoriesScreen() {
                   <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
                 </Pressable>
                 <Pressable
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setDeleteTarget(item.name);
-                    setDeleteModalVisible(true);
-                  }}
+                  onPress={() => handleDeletePress(item.name)}
                   style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${item.name}`}
@@ -246,7 +290,162 @@ export default function CategoriesScreen() {
         </>
       )}
     </View>
-  ), [editingId, editValue, c, handleEdit]);
+  ), [editingId, editValue, c, handleEdit, handleDeletePress]);
+
+  // Render modal content based on current view
+  const renderModalContent = () => {
+    switch (modalView) {
+      case 'confirm':
+        return (
+          <>
+            <Text style={[styles.dialogTitle, { color: c.onBackground }]}>
+              Delete "{deleteTarget}"?
+            </Text>
+            {affectedPrompts.length > 0 ? (
+              <Text style={[styles.dialogText, { color: c.onSurfaceVariant }]}>
+                This category has {affectedPrompts.length} prompt{affectedPrompts.length !== 1 ? 's' : ''}.
+              </Text>
+            ) : (
+              <Text style={[styles.dialogText, { color: c.onSurfaceVariant }]}>
+                This category has no prompts.
+              </Text>
+            )}
+            <View style={styles.dialogActions}>
+              <Pressable
+                onPress={() => { modalRef.current?.dismiss(); }}
+                style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant, borderWidth: 1, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+                android_ripple={{ color: c.onBackground + '14' }}
+              >
+                <Text style={[styles.dialogBtnText, { color: c.onBackground }]}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleConfirmDelete}
+                style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Continue"
+                android_ripple={{ color: c.onPrimary + '30' }}
+              >
+                <Text style={[styles.dialogBtnText, { color: c.onPrimary }]}>Continue</Text>
+              </Pressable>
+            </View>
+          </>
+        );
+
+      case 'prompts':
+        return (
+          <>
+            <Text style={[styles.dialogTitle, { color: c.onBackground }]}>
+              Prompts in "{deleteTarget}"
+            </Text>
+            <ScrollView style={styles.promptsList} showsVerticalScrollIndicator={false}>
+              {affectedPrompts.map((p) => (
+                <View key={p.id} style={[styles.promptItem, { borderBottomColor: c.outlineVariant }]}>
+                  <View style={[styles.promptDot, { backgroundColor: p.color || c.primary }]} />
+                  <Text style={[styles.promptItemTitle, { color: c.onBackground }]} numberOfLines={1}>
+                    {p.title}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.dialogActions}>
+              <Pressable
+                onPress={handleDeleteAll}
+                style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Delete all prompts"
+                android_ripple={{ color: c.onError + '30' }}
+              >
+                <Text style={[styles.dialogBtnText, { color: c.onError }]}>Delete All</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleMoveToCategory}
+                style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Move to another category"
+                android_ripple={{ color: c.onPrimary + '30' }}
+              >
+                <Text style={[styles.dialogBtnText, { color: c.onPrimary }]}>Move to Category</Text>
+              </Pressable>
+            </View>
+          </>
+        );
+
+      case 'reassign':
+        return (
+          <>
+            <Text style={[styles.dialogTitle, { color: c.onBackground }]}>
+              Move prompts to:
+            </Text>
+            <ScrollView style={styles.categoryList} showsVerticalScrollIndicator={false}>
+              {reassignCategories.map((cat) => (
+                <Pressable
+                  key={cat.name}
+                  onPress={() => handleReassign(cat.name)}
+                  style={({ pressed }) => [styles.reassignOption, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Move to ${cat.name}`}
+                  android_ripple={{ color: c.onBackground + '14' }}
+                >
+                  <Text style={[styles.reassignText, { color: c.onBackground }]}>{cat.name}</Text>
+                  <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => setModalView('createCategory')}
+                style={({ pressed }) => [styles.reassignOption, { borderColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Create new category"
+                android_ripple={{ color: c.primary + '14' }}
+              >
+                <Ionicons name="add-circle-outline" size={ICON_SIZE.md} color={c.primary} />
+                <Text style={[styles.reassignText, { color: c.primary }]}>Create New Category</Text>
+              </Pressable>
+            </ScrollView>
+          </>
+        );
+
+      case 'createCategory':
+        return (
+          <>
+            <Text style={[styles.dialogTitle, { color: c.onBackground }]}>
+              Create new category
+            </Text>
+            <View style={[styles.createCatRow, { borderColor: c.outlineVariant, backgroundColor: c.surfaceContainer }]}>
+              <TextInput
+                ref={newCatInputRef}
+                style={[styles.createCatInput, { color: c.onBackground }]}
+                value={newCategoryForMove}
+                onChangeText={setNewCategoryForMove}
+                placeholder="Category name"
+                placeholderTextColor={c.disabled}
+                returnKeyType="done"
+                onSubmitEditing={handleCreateCategoryForMove}
+              />
+              <Pressable
+                onPress={handleCreateCategoryForMove}
+                style={({ pressed }) => [styles.createCatBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Create and move"
+                android_ripple={{ color: c.onPrimary + '30' }}
+              >
+                <Ionicons name="checkmark" size={ICON_SIZE.md} color={c.onPrimary} />
+              </Pressable>
+            </View>
+            <Pressable
+              onPress={() => setModalView('reassign')}
+              style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Back to category list"
+            >
+              <Ionicons name="arrow-back" size={ICON_SIZE.sm} color={c.primary} />
+              <Text style={[styles.backLinkText, { color: c.primary }]}>Back to categories</Text>
+            </Pressable>
+          </>
+        );
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
@@ -268,10 +467,10 @@ export default function CategoriesScreen() {
           }}
           style={({ pressed }) => [styles.addBtn, { opacity: pressed ? 0.7 : 1 }]}
           accessibilityRole="button"
-          accessibilityLabel="Add category"
+          accessibilityLabel="Add new category"
           android_ripple={{ color: c.onBackground + '14', borderless: true }}
         >
-          <Ionicons name="add" size={24} color={c.primary} />
+          <Ionicons name="add-circle-outline" size={24} color={c.primary} />
         </Pressable>
       </View>
 
@@ -284,12 +483,12 @@ export default function CategoriesScreen() {
             onChangeText={setNewCategoryName}
             placeholder="Category name"
             placeholderTextColor={c.disabled}
-            onSubmitEditing={handleCreate}
             returnKeyType="done"
+            onSubmitEditing={handleCreate}
           />
           <Pressable
             onPress={handleCreate}
-            style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.iconBtn, { backgroundColor: c.primary + '18', opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Confirm create"
             android_ripple={{ color: c.onBackground + '14' }}
@@ -297,10 +496,7 @@ export default function CategoriesScreen() {
             <Ionicons name="checkmark" size={20} color={c.primary} />
           </Pressable>
           <Pressable
-            onPress={() => {
-              setIsCreating(false);
-              setNewCategoryName('');
-            }}
+            onPress={() => { setIsCreating(false); setNewCategoryName(''); }}
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Cancel create"
@@ -328,60 +524,9 @@ export default function CategoriesScreen() {
         }
       />
 
-      {/* Delete confirmation sheet */}
-      <BottomSheet ref={deleteSheetRef} onClose={() => setDeleteModalVisible(false)}>
-        <Text style={[styles.dialogTitle, { color: c.onBackground }]}>Delete "{deleteTarget}"?</Text>
-        {affectedPrompts.length > 0 ? (
-          <Text style={[styles.dialogText, { color: c.onSurfaceVariant }]}>
-            This category has {affectedPrompts.length} prompt{affectedPrompts.length !== 1 ? 's' : ''}. They will be moved to "Other".
-          </Text>
-        ) : (
-          <Text style={[styles.dialogText, { color: c.onSurfaceVariant }]}>
-            This category has no prompts.
-          </Text>
-        )}
-        <View style={styles.dialogActions}>
-          <Pressable
-            onPress={() => deleteSheetRef.current?.dismiss()}
-            style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant, borderWidth: 1, opacity: pressed ? 0.7 : 1 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel"
-            android_ripple={{ color: c.onBackground + '14' }}
-          >
-            <Text style={[styles.dialogBtnText, { color: c.onBackground }]}>Cancel</Text>
-          </Pressable>
-          <Pressable
-            onPress={handleDelete}
-            style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Delete"
-            android_ripple={{ color: c.error + '30' }}
-          >
-            <Text style={[styles.dialogBtnText, { color: c.onError }]}>Delete</Text>
-          </Pressable>
-        </View>
-      </BottomSheet>
-
-      {/* Reassign category sheet */}
-      <BottomSheet ref={reassignSheetRef} onClose={() => setReassignModalVisible(false)}>
-        <Text style={[styles.dialogTitle, { color: c.onBackground }]}>Move prompts to:</Text>
-        <FlatList
-          data={reassignCategories}
-          keyExtractor={(item) => item.name}
-          style={styles.reassignList}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => handleReassign(item.name)}
-              style={({ pressed }) => [styles.reassignOption, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Move to ${item.name}`}
-              android_ripple={{ color: c.onBackground + '14' }}
-            >
-              <Text style={[styles.reassignText, { color: c.onBackground }]}>{item.name}</Text>
-              <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
-            </Pressable>
-          )}
-        />
+      {/* Single modal with state-driven content */}
+      <BottomSheet ref={modalRef} onClose={() => { setModalVisible(false); setDeleteTarget(null); setNewCategoryForMove(''); }}>
+        {renderModalContent()}
       </BottomSheet>
     </SafeAreaView>
   );
@@ -448,33 +593,35 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.bodyMedium.fontWeight,
   },
   promptCount: {
-    fontSize: TYPOGRAPHY.labelSmall.fontSize,
-    marginTop: SPACING.xs,
+    fontSize: TYPOGRAPHY.small.fontSize,
+    fontWeight: TYPOGRAPHY.small.fontWeight,
+    marginTop: 2,
   },
   actions: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   iconBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.xs,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.sm,
   },
   editContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
   editInput: {
     flex: 1,
-    fontSize: TYPOGRAPHY.body.fontSize,
+    height: TOUCH_TARGET,
     borderWidth: 1,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.md,
-    height: TOUCH_TARGET,
+    fontSize: TYPOGRAPHY.bodyMedium.fontSize,
   },
   empty: {
     alignItems: 'center',
@@ -482,9 +629,9 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -494,18 +641,6 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: TYPOGRAPHY.caption.fontSize,
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xl,
-  },
-  dialog: {
-    width: '100%',
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    padding: SPACING.xl,
   },
   dialogTitle: {
     fontSize: TYPOGRAPHY.subheading.fontSize,
@@ -519,35 +654,86 @@ const styles = StyleSheet.create({
   },
   dialogActions: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
   },
   dialogBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     height: TOUCH_TARGET,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.sm,
   },
   dialogBtnText: {
     fontSize: TYPOGRAPHY.captionSemibold.fontSize,
     fontWeight: TYPOGRAPHY.captionSemibold.fontWeight,
   },
-  reassignList: {
+  promptsList: {
     maxHeight: 200,
-    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  promptItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  promptDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  promptItemTitle: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    flex: 1,
+  },
+  categoryList: {
+    maxHeight: 300,
   },
   reassignOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: TOUCH_TARGET,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.sm,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
     borderWidth: 1,
-    marginBottom: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.xs,
   },
   reassignText: {
-    fontSize: TYPOGRAPHY.bodyMedium.fontSize,
-    fontWeight: TYPOGRAPHY.bodyMedium.fontWeight,
+    fontSize: TYPOGRAPHY.body.fontSize,
+    flex: 1,
+  },
+  createCatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.md,
+    height: TOUCH_TARGET,
+    marginBottom: SPACING.sm,
+  },
+  createCatInput: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.body.fontSize,
+    padding: 0,
+  },
+  createCatBtn: {
+    width: TOUCH_TARGET,
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.sm,
+  },
+  backLinkText: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    fontWeight: '500',
   },
 });

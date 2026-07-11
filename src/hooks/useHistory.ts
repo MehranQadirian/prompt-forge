@@ -1,92 +1,205 @@
-import { useReducer, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const MAX_HISTORY = 50;
+const BATCH_DELAY_MS = 800;
 
-interface HistoryState {
-  past: string[];
-  present: string;
-  future: string[];
+interface EditorState {
+  text: string;
+  cursorStart: number;
+  cursorEnd: number;
 }
 
-type HistoryAction =
-  | { type: 'SET'; payload: string }
-  | { type: 'UNDO' }
-  | { type: 'REDO' };
-
-function historyReducer(state: HistoryState, action: HistoryAction): HistoryState {
-  switch (action.type) {
-    case 'SET': {
-      const newPast = [...state.past, state.present].slice(-MAX_HISTORY);
-      return { past: newPast, present: action.payload, future: [] };
-    }
-    case 'UNDO': {
-      if (state.past.length === 0) return state;
-      const previous = state.past[state.past.length - 1];
-      const newPast = state.past.slice(0, -1);
-      return {
-        past: newPast,
-        present: previous,
-        future: [...state.future, state.present],
-      };
-    }
-    case 'REDO': {
-      if (state.future.length === 0) return state;
-      const next = state.future[state.future.length - 1];
-      const newFuture = state.future.slice(0, -1);
-      return {
-        past: [...state.past, state.present],
-        present: next,
-        future: newFuture,
-      };
-    }
-    default:
-      return state;
-  }
+interface HistoryStore {
+  undoStack: EditorState[];
+  redoStack: EditorState[];
+  current: EditorState;
 }
 
 export function useHistoryState(initialValue: string) {
-  const [state, dispatch] = useReducer(historyReducer, {
-    past: [],
-    present: initialValue,
-    future: [],
+  const storeRef = useRef<HistoryStore>({
+    undoStack: [],
+    redoStack: [],
+    current: { text: initialValue, cursorStart: 0, cursorEnd: 0 },
   });
 
-  const lastCommitted = useRef(initialValue);
-  const presentRef = useRef(initialValue);
+  const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSnapshotRef = useRef<EditorState | null>(null);
+  const isUndoRedoRef = useRef(false);
+  const [, forceUpdate] = useState(0);
 
-  presentRef.current = state.present;
+  const triggerUpdate = useCallback(() => forceUpdate((n) => n + 1), []);
 
-  const setValue = useCallback((newValue: string) => {
-    presentRef.current = newValue;
-    if (newValue !== lastCommitted.current) {
-      lastCommitted.current = newValue;
-      dispatch({ type: 'SET', payload: newValue });
+  // Snapshot the state before a batch of changes begins
+  const snapshotBeforeChange = useCallback((text: string, cursorStart: number, cursorEnd: number) => {
+    if (!pendingSnapshotRef.current) {
+      pendingSnapshotRef.current = {
+        text,
+        cursorStart,
+        cursorEnd,
+      };
     }
   }, []);
 
+  // Push a snapshot to the undo stack
+  const pushToUndo = useCallback((snapshot: EditorState) => {
+    const store = storeRef.current;
+    store.undoStack.push(snapshot);
+    if (store.undoStack.length > MAX_HISTORY) {
+      store.undoStack.shift();
+    }
+    // New change branch — clear redo
+    store.redoStack = [];
+  }, []);
+
+  // Flush the pending batch: save the snapshot to undo stack
+  const flushBatch = useCallback(() => {
+    if (batchTimerRef.current) {
+      clearTimeout(batchTimerRef.current);
+      batchTimerRef.current = null;
+    }
+    if (pendingSnapshotRef.current) {
+      pushToUndo(pendingSnapshotRef.current);
+      pendingSnapshotRef.current = null;
+      triggerUpdate();
+    }
+  }, [pushToUndo, triggerUpdate]);
+
+  // Schedule a batch save
+  const scheduleBatch = useCallback(
+    (previousText: string, cursorStart: number, cursorEnd: number) => {
+      snapshotBeforeChange(previousText, cursorStart, cursorEnd);
+
+      if (batchTimerRef.current) {
+        clearTimeout(batchTimerRef.current);
+      }
+      batchTimerRef.current = setTimeout(() => {
+        flushBatch();
+      }, BATCH_DELAY_MS);
+    },
+    [snapshotBeforeChange, flushBatch]
+  );
+
+  // Set text value (called on every keystroke)
+  const setValue = useCallback(
+    (newValue: string, cursorStart?: number, cursorEnd?: number) => {
+      const store = storeRef.current;
+      if (isUndoRedoRef.current) return;
+
+      const cs = cursorStart ?? newValue.length;
+      const ce = cursorEnd ?? cs;
+
+      // Save previous text BEFORE updating
+      const previousText = store.current.text;
+      store.current = { text: newValue, cursorStart: cs, cursorEnd: ce };
+      scheduleBatch(previousText, cs, ce);
+    },
+    [scheduleBatch]
+  );
+
+  // Set text value immediately (no batching) — for atomic actions
+  const setValueImmediate = useCallback(
+    (newValue: string, cursorStart?: number, cursorEnd?: number) => {
+      const store = storeRef.current;
+      if (isUndoRedoRef.current) return;
+
+      // Flush any pending batch first
+      flushBatch();
+
+      const cs = cursorStart ?? newValue.length;
+      const ce = cursorEnd ?? cs;
+
+      // Push current state to undo before replacing
+      pushToUndo({ ...store.current });
+      store.current = { text: newValue, cursorStart: cs, cursorEnd: ce };
+      triggerUpdate();
+    },
+    [flushBatch, pushToUndo, triggerUpdate]
+  );
+
+  // Commit final state (on keyboard dismiss, version save, etc.)
+  const commitNow = useCallback(
+    (value: string, cursorStart?: number, cursorEnd?: number) => {
+      const store = storeRef.current;
+      const cs = cursorStart ?? store.current.text.length;
+      const ce = cursorEnd ?? cs;
+
+      // Flush any pending batch
+      flushBatch();
+
+      // If value changed, ensure it's saved
+      if (value !== store.current.text) {
+        pushToUndo({ ...store.current });
+        store.current = { text: value, cursorStart: cs, cursorEnd: ce };
+        triggerUpdate();
+      }
+    },
+    [flushBatch, pushToUndo, triggerUpdate]
+  );
+
+  // Undo
   const undo = useCallback(() => {
-    dispatch({ type: 'UNDO' });
-  }, []);
+    const store = storeRef.current;
+    if (store.undoStack.length === 0) return;
 
+    // Flush any pending batch first
+    flushBatch();
+
+    isUndoRedoRef.current = true;
+
+    // Push current to redo
+    store.redoStack.push({ ...store.current });
+
+    // Pop from undo
+    const previous = store.undoStack.pop()!;
+    store.current = previous;
+
+    isUndoRedoRef.current = false;
+    triggerUpdate();
+  }, [flushBatch, triggerUpdate]);
+
+  // Redo
   const redo = useCallback(() => {
-    dispatch({ type: 'REDO' });
+    const store = storeRef.current;
+    if (store.redoStack.length === 0) return;
+
+    isUndoRedoRef.current = true;
+
+    // Push current to undo
+    store.undoStack.push({ ...store.current });
+
+    // Pop from redo
+    const next = store.redoStack.pop()!;
+    store.current = next;
+
+    isUndoRedoRef.current = false;
+    triggerUpdate();
+  }, [triggerUpdate]);
+
+  // Record an atomic action (paste, formatting, AI replace)
+  const recordAtomic = useCallback(
+    (newValue: string, cursorStart?: number, cursorEnd?: number) => {
+      setValueImmediate(newValue, cursorStart, cursorEnd);
+    },
+    [setValueImmediate]
+  );
+
+  // Get current cursor position for restoring after undo/redo
+  const getCursor = useCallback(() => {
+    const { cursorStart, cursorEnd } = storeRef.current.current;
+    return { cursorStart, cursorEnd };
   }, []);
 
-  const commitNow = useCallback((value: string) => {
-    presentRef.current = value;
-    if (value !== lastCommitted.current) {
-      lastCommitted.current = value;
-      dispatch({ type: 'SET', payload: value });
-    }
-  }, []);
+  const store = storeRef.current;
 
   return {
-    present: state.present,
-    canUndo: state.past.length > 0,
-    canRedo: state.future.length > 0,
+    present: store.current.text,
+    canUndo: store.undoStack.length > 0,
+    canRedo: store.redoStack.length > 0,
     setValue,
     undo,
     redo,
     commitNow,
+    recordAtomic,
+    getCursor,
   };
 }

@@ -15,10 +15,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { usePromptStore } from '../../src/stores/promptStore';
+import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { PromptCard } from '../../src/components/cards/PromptCard';
+import { useSwipeStore } from '../../src/stores/swipeStore';
 import { ContextMenu } from '../../src/components/ContextMenu';
 import { PromptPreviewContent } from '../../src/components/PromptPreviewSheet';
 import { useBottomSheet } from '../../src/components/BottomSheetContext';
@@ -27,7 +29,7 @@ import { CategoryTag } from '../../src/components/CategoryTag';
 import { ColorGridSheet } from '../../src/components/ColorGridSheet';
 import { BottomSheet, BottomSheetRef } from '../../src/components/BottomSheet';
 import { SPACING, RADIUS, TOUCH_TARGET, TYPOGRAPHY, ICON_SIZE } from '../../src/constants';
-import { Prompt } from '../../src/types';
+import { Prompt, SwipeAction } from '../../src/types';
 import DraggableFlatList, { ScaleDecorator } from 'react-native-draggable-flatlist';
 
 const CategoryInput = React.memo(function CategoryInput({
@@ -106,6 +108,34 @@ export default function PromptsScreen() {
     getFilteredPrompts,
   } = usePromptStore();
 
+  const { settings } = useSettingsStore();
+
+  const handleSwipeAction = useCallback((action: SwipeAction, prompt: Prompt) => {
+    switch (action) {
+      case 'edit':
+        selectPrompt(prompt.id);
+        router.push(`/editor?id=${prompt.id}`);
+        break;
+      case 'duplicate':
+        duplicatePrompt(prompt.id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        break;
+      case 'pin':
+        togglePin(prompt.id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        break;
+      case 'favorite':
+        toggleFavorite(prompt.id);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        break;
+      case 'delete':
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        setDeleteConfirmPrompt(prompt);
+        deleteConfirmRef.current?.present();
+        break;
+    }
+  }, [selectPrompt, router, duplicatePrompt, togglePin, toggleFavorite, deletePrompt]);
+
   const [searchVisible, setSearchVisible] = useState(false);
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPrompt, setContextMenuPrompt] = useState<Prompt | null>(null);
@@ -120,6 +150,9 @@ export default function PromptsScreen() {
   const [categoryContextMenuName, setCategoryContextMenuName] = useState<string | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteConfirmPrompt, setDeleteConfirmPrompt] = useState<Prompt | null>(null);
+  const deleteConfirmRef = useRef<BottomSheetRef>(null);
+  const bulkDeleteConfirmRef = useRef<BottomSheetRef>(null);
 
   // Animation values for selection mode transitions
   const headerOpacity = useSharedValue(1);
@@ -129,13 +162,13 @@ export default function PromptsScreen() {
 
   useEffect(() => {
     if (selectionMode) {
-      headerOpacity.value = withTiming(0, { duration: 200 });
-      headerTranslateY.value = withTiming(-20, { duration: 200 });
-      bulkOpacity.value = withTiming(1, { duration: 200 });
-      bulkTranslateY.value = withTiming(0, { duration: 200 });
+      headerOpacity.value = withTiming(0, { duration: 250 });
+      headerTranslateY.value = withTiming(-20, { duration: 250 });
+      bulkOpacity.value = withTiming(1, { duration: 250 });
+      bulkTranslateY.value = withSpring(0, { damping: 20, stiffness: 200 });
     } else {
-      headerOpacity.value = withTiming(1, { duration: 200 });
-      headerTranslateY.value = withTiming(0, { duration: 200 });
+      headerOpacity.value = withTiming(1, { duration: 250 });
+      headerTranslateY.value = withSpring(0, { damping: 20, stiffness: 200 });
       bulkOpacity.value = withTiming(0, { duration: 200 });
       bulkTranslateY.value = withTiming(20, { duration: 200 });
     }
@@ -252,7 +285,7 @@ export default function PromptsScreen() {
   }, [addCustomCategory, setFilterCategory]);
 
   const handlePromptPress = useCallback((prompt: Prompt) => {
-    showBottomSheet(
+    const content = (
       <PromptPreviewContent
         prompt={prompt}
         onClose={hideBottomSheet}
@@ -267,6 +300,14 @@ export default function PromptsScreen() {
         }}
       />
     );
+    const footer = (
+      <PromptPreviewContent.Footer
+        prompt={prompt}
+        onDelete={(p) => { deletePrompt(p.id); hideBottomSheet(); }}
+        onEdit={(p) => { hideBottomSheet(); selectPrompt(p.id); router.push(`/editor?id=${p.id}`); }}
+      />
+    );
+    showBottomSheet(content, footer);
   }, [showBottomSheet, hideBottomSheet, selectPrompt, router, deletePrompt]);
 
   const handlePromptLongPress = useCallback((prompt: Prompt) => {
@@ -305,23 +346,8 @@ export default function PromptsScreen() {
 
   const handleBulkDelete = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    Alert.alert(
-      'Delete Prompts',
-      `Delete ${selectedIds.size} prompt${selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            selectedIds.forEach((id) => deletePrompt(id));
-            setSelectionMode(false);
-            setSelectedIds(new Set());
-          },
-        },
-      ]
-    );
-  }, [selectedIds, deletePrompt]);
+    bulkDeleteConfirmRef.current?.present();
+  }, []);
 
   const handleBulkDuplicate = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -360,8 +386,12 @@ export default function PromptsScreen() {
       selected={selectedIds.has(item.id)}
       showCheckbox={selectionMode}
       onToggleSelect={() => handleToggleSelect(item.id)}
+      leftAction={settings.swipeLeftAction}
+      rightAction={settings.swipeRightAction}
+      onLeftAction={() => handleSwipeAction(settings.swipeLeftAction, item)}
+      onRightAction={() => handleSwipeAction(settings.swipeRightAction, item)}
     />
-  ), [selectionMode, selectedIds, handlePromptPress, handlePromptLongPress, handleToggleSelect]);
+  ), [selectionMode, selectedIds, handlePromptPress, handlePromptLongPress, handleToggleSelect, settings.swipeLeftAction, settings.swipeRightAction]);
 
   const categoryData = useMemo(() => {
     const items = [
@@ -382,12 +412,11 @@ export default function PromptsScreen() {
     const allCategory = categoryData.find(item => item.id === 'all');
     const addCategory = categoryData.find(item => item.id === 'add');
     const draggableCategories = categoryData.filter(item => item.id !== 'all' && item.id !== 'add' && item.id !== 'done-reorder' && item.id !== 'new-input');
-    const actionItems = categoryData.filter(item => item.id === 'done-reorder' || item.id === 'new-input');
 
     return (
     <View>
       {reorderMode ? (
-        /* Reorder mode: Fixed "All" + DraggableFlatList + Done button */
+        /* Reorder mode: Fixed "All" + DraggableFlatList */
         <View style={styles.reorderContainer}>
           {/* Fixed "All" category */}
           {allCategory && (
@@ -427,24 +456,6 @@ export default function PromptsScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.draggableList}
           />
-
-          {/* Done button */}
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setReorderMode(false);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Done reordering"
-            android_ripple={{ color: headerColors.onBackground + '14' }}
-            hitSlop={8}
-            style={({ pressed }) => [
-              styles.addBtn,
-              { borderColor: headerColors.primary, backgroundColor: headerColors.primary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Ionicons name="checkmark" size={18} color={headerColors.onPrimary} />
-          </Pressable>
         </View>
       ) : (
         /* Normal mode: FlatList with all items */
@@ -516,6 +527,25 @@ export default function PromptsScreen() {
         <Text style={[styles.resultsText, { color: headerColors.onSurfaceVariant }]}>
           {filteredPrompts.length} prompt{filteredPrompts.length !== 1 ? 's' : ''}
         </Text>
+        {reorderMode && (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setReorderMode(false);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Done reordering"
+            android_ripple={{ color: headerColors.onBackground + '14' }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.doneBtn,
+              { backgroundColor: headerColors.primary, opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Ionicons name="checkmark" size={16} color={headerColors.onPrimary} />
+            <Text style={[styles.doneBtnText, { color: headerColors.onPrimary }]}>Done</Text>
+          </Pressable>
+        )}
       </View>
     </View>
     );
@@ -598,6 +628,7 @@ export default function PromptsScreen() {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        onScrollBeginDrag={() => useSwipeStore.getState().closeAll()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={c.primary} />
         }
@@ -717,6 +748,89 @@ export default function PromptsScreen() {
           <Text style={[styles.categoryContextItemText, { color: c.onBackground }]}>Manage Categories</Text>
         </Pressable>
       </BottomSheet>
+
+      {/* Single delete confirmation */}
+      {deleteConfirmPrompt && (
+        <BottomSheet
+          ref={deleteConfirmRef}
+          onClose={() => { setDeleteConfirmPrompt(null); }}
+        >
+          <View style={styles.confirmHeader}>
+            <View style={[styles.confirmIcon, { backgroundColor: c.error + '18' }]}>
+              <Ionicons name="warning" size={ICON_SIZE.xl} color={c.error} />
+            </View>
+            <Text style={[styles.confirmTitle, { color: c.onBackground }]}>Delete Prompt</Text>
+            <Text style={[styles.confirmMessage, { color: c.onSurfaceVariant }]}>
+              Are you sure you want to delete "{deleteConfirmPrompt.title}"? This action cannot be undone.
+            </Text>
+          </View>
+          <View style={styles.confirmActions}>
+            <Pressable
+              onPress={() => { deleteConfirmRef.current?.dismiss(); }}
+              style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              android_ripple={{ color: c.onBackground + '14' }}
+            >
+              <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                if (deleteConfirmPrompt) deletePrompt(deleteConfirmPrompt.id);
+                deleteConfirmRef.current?.dismiss();
+                setDeleteConfirmPrompt(null);
+              }}
+              style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Delete"
+              android_ripple={{ color: c.onError + '30' }}
+            >
+              <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
+            </Pressable>
+          </View>
+        </BottomSheet>
+      )}
+
+      {/* Bulk delete confirmation */}
+      <BottomSheet
+        ref={bulkDeleteConfirmRef}
+        onClose={() => {}}
+      >
+          <View style={styles.confirmHeader}>
+            <View style={[styles.confirmIcon, { backgroundColor: c.error + '18' }]}>
+              <Ionicons name="warning" size={ICON_SIZE.xl} color={c.error} />
+            </View>
+            <Text style={[styles.confirmTitle, { color: c.onBackground }]}>Delete Prompts</Text>
+            <Text style={[styles.confirmMessage, { color: c.onSurfaceVariant }]}>
+              Delete {selectedIds.size} prompt{selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.
+            </Text>
+          </View>
+          <View style={styles.confirmActions}>
+            <Pressable
+              onPress={() => bulkDeleteConfirmRef.current?.dismiss()}
+              style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel"
+              android_ripple={{ color: c.onBackground + '14' }}
+            >
+              <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                selectedIds.forEach((id) => deletePrompt(id));
+                setSelectionMode(false);
+                setSelectedIds(new Set());
+                bulkDeleteConfirmRef.current?.dismiss();
+              }}
+              style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel="Delete all"
+              android_ripple={{ color: c.onError + '30' }}
+            >
+              <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
+            </Pressable>
+          </View>
+        </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -781,11 +895,75 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
   },
   resultsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.sm,
   },
   resultsText: {
     ...TYPOGRAPHY.labelSmallMedium,
+  },
+  doneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    height: 28,
+    borderRadius: RADIUS.sm,
+  },
+  doneBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  confirmHeader: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  confirmIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  confirmTitle: {
+    fontSize: TYPOGRAPHY.subheading.fontSize,
+    fontWeight: TYPOGRAPHY.subheading.fontWeight,
+    marginBottom: SPACING.sm,
+  },
+  confirmMessage: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+  },
+  confirmCancelText: {
+    fontSize: TYPOGRAPHY.captionSemibold.fontSize,
+    fontWeight: TYPOGRAPHY.captionSemibold.fontWeight,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.sm,
+  },
+  confirmDeleteText: {
+    fontSize: TYPOGRAPHY.captionSemibold.fontSize,
+    fontWeight: TYPOGRAPHY.captionSemibold.fontWeight,
   },
   list: {
     paddingHorizontal: SPACING.lg,

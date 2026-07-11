@@ -19,6 +19,6 @@ export function StatItem({ label, value, color, mutedColor }: StatItemProps) {
 
 const styles = StyleSheet.create({
   statItem: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 16, fontWeight: '700' },
-  statLabel: { fontSize: 10, fontWeight: '500', marginTop: 2 },
+  statValue: { fontSize: 13, fontWeight: '700' },
+  statLabel: { fontSize: 9, fontWeight: '500', marginTop: 1 },
 });

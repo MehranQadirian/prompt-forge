@@ -28,6 +28,7 @@ export function TemplateCard({ template, onPress, onLongPress }: TemplateCardPro
   }, [onLongPress]);
 
   return (
+    <View style={{ marginBottom: 12 }}>
     <BaseCard
       onPress={handlePress}
       onLongPress={handleLongPress}
@@ -71,6 +72,7 @@ export function TemplateCard({ template, onPress, onLongPress }: TemplateCardPro
         </Text>
       </View>
     </BaseCard>
+    </View>
   );
 }
 

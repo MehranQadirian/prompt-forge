@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
 import { PromptVersion } from '../types';
-import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE } from '../constants';
+import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE, TYPOGRAPHY } from '../constants';
 import { hapticMedium, hapticHeavy } from '../constants/haptics';
 import { BottomSheet, BottomSheetRef } from './BottomSheet';
 
@@ -36,21 +36,15 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
 
   const handleDelete = (v: PromptVersion) => {
     hapticHeavy();
-    Alert.alert(
-      'Delete Version',
-      `Delete version from ${new Date(v.timestamp).toLocaleString()}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => onDeleteVersion(v.id),
-        },
-      ]
-    );
+    setDeleteConfirmVersion(v);
+    deleteConfirmRef.current?.present();
   };
 
+  const [deleteConfirmVersion, setDeleteConfirmVersion] = useState<PromptVersion | null>(null);
+  const deleteConfirmRef = useRef<BottomSheetRef>(null);
+
   return (
+    <>
     <BottomSheet ref={sheetRef} onClose={onClose}>
       {/* Header */}
       <View style={styles.header}>
@@ -149,6 +143,46 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
         })
       )}
     </BottomSheet>
+
+    {/* Delete version confirmation */}
+    {deleteConfirmVersion && (
+      <BottomSheet ref={deleteConfirmRef} onClose={() => setDeleteConfirmVersion(null)}>
+        <View style={styles.confirmHeader}>
+          <View style={[styles.confirmIcon, { backgroundColor: c.error + '18' }]}>
+            <Ionicons name="warning" size={ICON_SIZE.xl} color={c.error} />
+          </View>
+          <Text style={[styles.confirmTitle, { color: c.onBackground }]}>Delete Version</Text>
+          <Text style={[styles.confirmMessage, { color: c.onSurfaceVariant }]}>
+            Delete version from {new Date(deleteConfirmVersion.timestamp).toLocaleString()}?
+          </Text>
+        </View>
+        <View style={styles.confirmActions}>
+          <Pressable
+            onPress={() => { deleteConfirmRef.current?.dismiss(); }}
+            style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel"
+            android_ripple={{ color: c.onBackground + '14' }}
+          >
+            <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              if (deleteConfirmVersion) onDeleteVersion(deleteConfirmVersion.id);
+              deleteConfirmRef.current?.dismiss();
+              setDeleteConfirmVersion(null);
+            }}
+            style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Delete"
+            android_ripple={{ color: c.onError + '30' }}
+          >
+            <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
+          </Pressable>
+        </View>
+      </BottomSheet>
+    )}
+    </>
   );
 }
 
@@ -267,5 +301,54 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
+  },
+  confirmHeader: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  confirmIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  confirmTitle: {
+    fontSize: TYPOGRAPHY.subheading.fontSize,
+    fontWeight: TYPOGRAPHY.subheading.fontWeight,
+    marginBottom: SPACING.sm,
+  },
+  confirmMessage: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  confirmCancelBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+  },
+  confirmCancelText: {
+    fontSize: TYPOGRAPHY.captionSemibold.fontSize,
+    fontWeight: TYPOGRAPHY.captionSemibold.fontWeight,
+  },
+  confirmDeleteBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.sm,
+  },
+  confirmDeleteText: {
+    fontSize: TYPOGRAPHY.captionSemibold.fontSize,
+    fontWeight: TYPOGRAPHY.captionSemibold.fontWeight,
   },
 });

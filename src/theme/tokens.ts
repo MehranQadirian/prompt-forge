@@ -160,8 +160,37 @@ export const lightThemeVariants: ThemeVariant[] = [
   'paper', 'sky', 'sage', 'rose', 'latte', 'lavender', 'snow',
 ];
 
-// Prompt accent colors (unchanged — used for color-coding prompts)
-export const PROMPT_COLORS = [
+// Prompt accent colors — 8 for dark themes, 8 for light themes
+export const PROMPT_COLORS_DARK = [
   '#7FBF8B', '#5EA8E0', '#E08A7A', '#B88AD9',
   '#E0907A', '#8BE9FD', '#F1FA8C', '#FF79C6',
 ];
+
+export const PROMPT_COLORS_LIGHT = [
+  '#2D7A50', '#2563EB', '#C04040', '#7050C0',
+  '#8A4C26', '#1D6FA5', '#8B6914', '#C02050',
+];
+
+// Legacy export for backward compatibility
+export const PROMPT_COLORS = [...PROMPT_COLORS_DARK, ...PROMPT_COLORS_LIGHT];
+
+// Get theme-aware color palette
+export function getPromptColors(mode: 'light' | 'dark'): string[] {
+  return mode === 'light' ? PROMPT_COLORS_LIGHT : PROMPT_COLORS_DARK;
+}
+
+// Map a color from one palette to the equivalent position in the other palette
+export function mapColorBetweenModes(color: string): string {
+  const lowerColor = color.toLowerCase();
+  // Check if color is in dark palette
+  const darkIndex = PROMPT_COLORS_DARK.findIndex(c => c.toLowerCase() === lowerColor);
+  if (darkIndex !== -1) {
+    return PROMPT_COLORS_LIGHT[darkIndex] || color;
+  }
+  // Check if color is in light palette
+  const lightIndex = PROMPT_COLORS_LIGHT.findIndex(c => c.toLowerCase() === lowerColor);
+  if (lightIndex !== -1) {
+    return PROMPT_COLORS_DARK[lightIndex] || color;
+  }
+  return color;
+}

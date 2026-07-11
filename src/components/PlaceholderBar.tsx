@@ -13,7 +13,9 @@ import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { detectPlaceholders, Placeholder, replacePlaceholdersByIndex } from '../utils/placeholders';
 import { useTheme } from '../theme/useTheme';
 import { usePlaceholderEditStore } from '../stores/placeholderEditStore';
-import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE, TYPOGRAPHY } from '../constants';
+import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY } from '../constants';
+
+const BTN_HEIGHT = 28;
 
 interface PlaceholderBarProps {
   text: string;
@@ -54,16 +56,13 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
     });
   }, [text]);
 
-  // Check for results when the component regains focus
   useEffect(() => {
     const checkResult = () => {
       const result = consumeResult();
       if (result) {
-        // Find the first unfilled placeholder matching this key/type, or the first one
         const currentPlaceholders = placeholdersRef.current;
         const currentValues = valuesRef.current;
 
-        // Find the placeholder that was being edited
         const targetPh = currentPlaceholders.find(
           (ph) => ph.key === result.key && ph.type === result.type
         );
@@ -79,7 +78,6 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
       }
     };
 
-    // Check on mount and periodically
     checkResult();
     const interval = setInterval(checkResult, 500);
     return () => clearInterval(interval);
@@ -117,11 +115,11 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
   const filledCount = placeholders.filter((ph) => (values[ph.index] || '').trim()).length;
 
   return (
-    <Animated.View entering={FadeInDown.duration(250)} exiting={FadeOutUp.duration(200)} style={[styles.container, { backgroundColor: c.surfaceContainerHigh, borderColor: c.outlineVariant }]}>
+    <Animated.View entering={FadeInDown.duration(200)} exiting={FadeOutUp.duration(150)} style={[styles.container, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
       <View style={styles.header}>
-        <Ionicons name="flash" size={ICON_SIZE.sm} color={c.primary} />
+        <Ionicons name="flash" size={12} color={c.primary} />
         <Text style={[styles.headerText, { color: c.onSurfaceVariant }]}>
-          Placeholders ({filledCount}/{placeholders.length} filled)
+          {filledCount}/{placeholders.length}
         </Text>
       </View>
 
@@ -130,12 +128,12 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.buttonsContainer}
       >
-        {placeholders.map((ph, index) => {
+        {placeholders.map((ph) => {
           const hasValue = !!(values[ph.index] || '').trim();
           const count = getKeyCount(ph.key, ph.type);
           const occurrence = getOccurrenceIndex(ph);
           const label = ph.type === 'bracket' ? `[${ph.key}]` : `{${ph.key}}`;
-          const displayLabel = count > 1 ? `${label} ${occurrence}` : label;
+          const displayLabel = count > 1 ? `${label}${occurrence}` : label;
 
           return (
             <Pressable
@@ -147,7 +145,7 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
               style={({ pressed }) => [
                 styles.placeholderBtn,
                 {
-                  backgroundColor: hasValue ? c.primary + '18' : c.surface,
+                  backgroundColor: hasValue ? c.primary + '18' : c.surfaceContainerHigh,
                   borderColor: hasValue ? c.primary : c.outlineVariant,
                   opacity: pressed ? 0.7 : 1,
                 },
@@ -163,7 +161,7 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
                 {displayLabel}
               </Text>
               {hasValue && (
-                <Ionicons name="checkmark-circle" size={14} color={c.primary} />
+                <Ionicons name="checkmark" size={10} color={c.primary} />
               )}
             </Pressable>
           );
@@ -176,36 +174,36 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: SPACING.md,
-    marginVertical: SPACING.sm,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
+    marginBottom: SPACING.sm,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
   },
   headerText: {
-    fontSize: TYPOGRAPHY.captionMedium.fontSize,
-    fontWeight: TYPOGRAPHY.captionMedium.fontWeight,
+    fontSize: TYPOGRAPHY.small.fontSize,
+    fontWeight: TYPOGRAPHY.small.fontWeight,
   },
   buttonsContainer: {
-    gap: SPACING.sm,
+    gap: SPACING.xs,
   },
   placeholderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
+    gap: 3,
+    paddingHorizontal: SPACING.sm,
+    height: BTN_HEIGHT,
+    borderRadius: RADIUS.xs,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   placeholderBtnText: {
-    fontSize: TYPOGRAPHY.captionMedium.fontSize,
-    fontWeight: TYPOGRAPHY.captionMedium.fontWeight,
+    fontSize: TYPOGRAPHY.small.fontSize,
+    fontWeight: TYPOGRAPHY.small.fontWeight,
     fontFamily: 'monospace',
   },
 });

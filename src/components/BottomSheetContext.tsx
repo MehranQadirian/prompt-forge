@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useRef } from 
 import { BottomSheet, BottomSheetRef } from './BottomSheet';
 
 interface BottomSheetContextValue {
-  showBottomSheet: (content: React.ReactNode) => void;
+  showBottomSheet: (content: React.ReactNode, footer?: React.ReactNode) => void;
   hideBottomSheet: () => void;
 }
 
@@ -17,11 +17,12 @@ export function useBottomSheet() {
 
 export function BottomSheetProvider({ children }: { children: React.ReactNode }) {
   const [content, setContent] = useState<React.ReactNode>(null);
+  const [footer, setFooter] = useState<React.ReactNode>(null);
   const sheetRef = useRef<BottomSheetRef>(null);
 
-  const showBottomSheet = useCallback((sheetContent: React.ReactNode) => {
+  const showBottomSheet = useCallback((sheetContent: React.ReactNode, sheetFooter?: React.ReactNode) => {
     setContent(sheetContent);
-    // Small delay to ensure content is rendered before opening
+    setFooter(sheetFooter || null);
     requestAnimationFrame(() => {
       sheetRef.current?.present();
     });
@@ -34,7 +35,7 @@ export function BottomSheetProvider({ children }: { children: React.ReactNode })
   return (
     <BottomSheetContext.Provider value={{ showBottomSheet, hideBottomSheet }}>
       {children}
-      <BottomSheet ref={sheetRef} onClose={() => setContent(null)}>
+      <BottomSheet ref={sheetRef} footer={footer} onClose={() => { setContent(null); setFooter(null); }}>
         {content}
       </BottomSheet>
     </BottomSheetContext.Provider>

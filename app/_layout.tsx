@@ -10,18 +10,26 @@ import { ThemeProvider } from '../src/theme/ThemeProvider';
 import { useTheme } from '../src/theme/useTheme';
 import { BottomSheetProvider } from '../src/components/BottomSheetContext';
 import SplashOverlay from '../src/components/SplashOverlay';
+import { mapColorBetweenModes } from '../src/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutInner() {
   const router = useRouter();
-  const { loadPrompts } = usePromptStore();
+  const { loadPrompts, mapPromptColorsForTheme } = usePromptStore();
   const { settings, loadSettings } = useSettingsStore();
   const { theme, mode } = useTheme();
   const [ready, setReady] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const hasRedirected = useRef(false);
+  const prevModeRef = useRef(mode);
 
+  // Hide native splash immediately so our SplashOverlay is visible
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  // Start loading data immediately — runs in parallel with splash animation
   const loadingPromise = useMemo(
     () =>
       Promise.all([loadSettings(), loadPrompts()]).then(() => {}),
@@ -30,9 +38,6 @@ function RootLayoutInner() {
 
   const handleSplashReady = useCallback(() => {
     setReady(true);
-    try {
-      SplashScreen.hideAsync();
-    } catch {}
     SystemUI.setBackgroundColorAsync(theme.color.surface);
     setShowSplash(false);
   }, [theme.color.surface]);
@@ -42,7 +47,6 @@ function RootLayoutInner() {
     if (!ready || hasRedirected.current) return;
     hasRedirected.current = true;
 
-    // Small delay to ensure Stack is mounted
     const timer = setTimeout(() => {
       if (!settings.hasOnboarded) {
         router.replace('/welcome');
@@ -60,16 +64,20 @@ function RootLayoutInner() {
     SystemUI.setBackgroundColorAsync(theme.color.surface);
   }, [ready, theme.color.surface]);
 
-  if (showSplash) {
-    return (
-      <SplashOverlay loadingPromise={loadingPromise} onReady={handleSplashReady} />
-    );
-  }
+  // Map prompt colors when theme mode changes (light <-> dark)
+  useEffect(() => {
+    if (!ready) return;
+    if (prevModeRef.current !== mode) {
+      prevModeRef.current = mode;
+      mapPromptColorsForTheme(mapColorBetweenModes);
+    }
+  }, [ready, mode]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: theme.color.background }}>
       <BottomSheetProvider>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+        {/* Stack is ALWAYS mounted — splash covers it while loading */}
         <Stack
           screenOptions={{
             headerShown: false,
@@ -77,6 +85,10 @@ function RootLayoutInner() {
             animation: 'simple_push',
           }}
         />
+        {/* Splash overlay on top — fades out when ready, revealing the app */}
+        {showSplash && (
+          <SplashOverlay loadingPromise={loadingPromise} onReady={handleSplashReady} />
+        )}
       </BottomSheetProvider>
     </GestureHandlerRootView>
   );

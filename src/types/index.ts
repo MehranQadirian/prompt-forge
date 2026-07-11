@@ -75,6 +75,8 @@ export interface ThemeTokens {
   };
 }
 
+export type SwipeAction = 'edit' | 'duplicate' | 'pin' | 'favorite' | 'delete' | 'none';
+
 export interface AppSettings {
   theme: ThemeVariant;
   fontSize: number;
@@ -82,6 +84,8 @@ export interface AppSettings {
   hasOnboarded: boolean;
   showTokenCount: boolean;
   followSystem: boolean;
+  swipeLeftAction: SwipeAction;
+  swipeRightAction: SwipeAction;
 }
 
 // ---------------------------------------------------------------------------

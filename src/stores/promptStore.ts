@@ -35,6 +35,7 @@ interface PromptState {
   toggleFavorite: (id: string) => void;
   togglePin: (id: string) => void;
   updatePromptColor: (id: string, color: string) => void;
+  mapPromptColorsForTheme: (mapFn: (color: string) => string) => void;
   addVersion: (id: string) => void;
   restoreVersion: (id: string, versionId: string) => void;
   getFilteredPrompts: () => Prompt[];
@@ -230,6 +231,16 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       prompts: state.prompts.map((p) =>
         p.id === id ? { ...p, color, updatedAt: new Date().toISOString() } : p
       ),
+    }));
+    get().savePrompts();
+  },
+
+  mapPromptColorsForTheme: (mapFn) => {
+    set((state) => ({
+      prompts: state.prompts.map((p) => ({
+        ...p,
+        color: mapFn(p.color),
+      })),
     }));
     get().savePrompts();
   },

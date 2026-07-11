@@ -1,43 +1,101 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Switch, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useTheme } from '../../src/theme/useTheme';
+import { SwipeAction } from '../../src/types';
 import * as Haptics from 'expo-haptics';
 import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
 
+const SWIPE_OPTIONS: { value: SwipeAction; label: string; icon: string }[] = [
+  { value: 'edit', label: 'Edit', icon: 'pencil' },
+  { value: 'duplicate', label: 'Duplicate', icon: 'copy' },
+  { value: 'pin', label: 'Pin', icon: 'pin' },
+  { value: 'favorite', label: 'Favorite', icon: 'star' },
+  { value: 'delete', label: 'Delete', icon: 'trash' },
+  { value: 'none', label: 'None', icon: 'close-circle' },
+];
+
 export default function OptionsScreen() {
   const router = useRouter();
-  const { settings, setShowTokenCount } = useSettingsStore();
+  const { settings, setShowTokenCount, setSwipeLeftAction, setSwipeRightAction } = useSettingsStore();
   const { theme } = useTheme();
+  const c = theme.color;
+
+  const renderSwipePicker = (
+    label: string,
+    currentValue: SwipeAction,
+    onSelect: (action: SwipeAction) => void
+  ) => (
+    <View style={styles.pickerSection}>
+      <Text style={[styles.pickerLabel, { color: c.onSurfaceVariant }]}>{label}</Text>
+      <View style={styles.pickerGrid}>
+        {SWIPE_OPTIONS.map((opt) => (
+          <Pressable
+            key={opt.value}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onSelect(opt.value);
+            }}
+            accessibilityRole="radio"
+            accessibilityLabel={opt.label}
+            accessibilityState={{ selected: currentValue === opt.value }}
+            android_ripple={{ color: c.primary + '14' }}
+            style={({ pressed }) => [
+              styles.pickerOption,
+              {
+                backgroundColor: currentValue === opt.value ? c.primary + '18' : c.surfaceContainerHigh,
+                borderColor: currentValue === opt.value ? c.primary : c.outlineVariant,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Ionicons
+              name={opt.icon as any}
+              size={ICON_SIZE.sm}
+              color={currentValue === opt.value ? c.primary : c.onSurfaceVariant}
+            />
+            <Text
+              style={[
+                styles.pickerOptionText,
+                { color: currentValue === opt.value ? c.primary : c.onSurfaceVariant },
+              ]}
+            >
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.color.background }]} edges={['top', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: theme.color.onBackground + '14', borderless: true }}
+          android_ripple={{ color: c.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.onBackground + '0D' : theme.color.surfaceContainer },
+            { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
           ]}
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
+          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.color.onBackground }]}>Options</Text>
+        <Text style={[styles.title, { color: c.onBackground }]}>Options</Text>
         <View style={{ width: TOUCH_TARGET }} />
       </View>
 
-      <View style={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Display</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Display</Text>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, { color: theme.color.onBackground }]}>Show Token Count</Text>
+            <Text style={[styles.switchLabel, { color: c.onBackground }]}>Show Token Count</Text>
             <Switch
               value={settings.showTokenCount}
               onValueChange={(val) => {
@@ -45,12 +103,23 @@ export default function OptionsScreen() {
                 setShowTokenCount(val);
               }}
               accessibilityLabel="Show token count"
-              trackColor={{ false: theme.color.disabledContainer, true: theme.color.primary + '80' }}
-              thumbColor={settings.showTokenCount ? theme.color.primary : theme.color.disabled}
+              trackColor={{ false: c.disabledContainer, true: c.primary + '80' }}
+              thumbColor={settings.showTokenCount ? c.primary : c.disabled}
             />
           </View>
         </View>
-      </View>
+
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Swipe Actions</Text>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
+          {renderSwipePicker('Swipe Left Action', settings.swipeLeftAction, setSwipeLeftAction)}
+          <View style={[styles.divider, { backgroundColor: c.outlineVariant }]} />
+          {renderSwipePicker('Swipe Right Action', settings.swipeRightAction, setSwipeRightAction)}
+        </View>
+
+        <Text style={[styles.hint, { color: c.onSurfaceVariant }]}>
+          Choose which action to assign to each swipe direction on prompt cards.
+        </Text>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -100,5 +169,40 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     ...TYPOGRAPHY.body,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: SPACING.lg,
+  },
+  pickerSection: {
+    padding: SPACING.lg,
+  },
+  pickerLabel: {
+    ...TYPOGRAPHY.captionMedium,
+    marginBottom: SPACING.sm,
+  },
+  pickerGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  pickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.xs,
+    borderWidth: 1,
+  },
+  pickerOptionText: {
+    fontSize: TYPOGRAPHY.small.fontSize,
+    fontWeight: '500',
+  },
+  hint: {
+    ...TYPOGRAPHY.caption,
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.xs,
+    lineHeight: 18,
   },
 });

@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
-import { TOUCH_TARGET, SPACING, RADIUS, ICON_SIZE } from '../constants';
+import { SPACING, RADIUS, ICON_SIZE } from '../constants';
+
+const BTN_SIZE = 32;
 
 interface UndoRedoBarProps {
   canUndo: boolean;
@@ -33,7 +35,7 @@ export function UndoRedoBar({ canUndo, canRedo, onUndo, onRedo }: UndoRedoBarPro
           },
         ]}
       >
-        <Ionicons name="arrow-undo" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
+        <Ionicons name="arrow-undo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
       </Pressable>
       <Pressable
         onPress={onRedo}
@@ -51,7 +53,7 @@ export function UndoRedoBar({ canUndo, canRedo, onUndo, onRedo }: UndoRedoBarPro
           },
         ]}
       >
-        <Ionicons name="arrow-redo" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
+        <Ionicons name="arrow-redo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
       </Pressable>
     </View>
   );
@@ -63,9 +65,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   btn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
+    width: BTN_SIZE,
+    height: BTN_SIZE,
+    borderRadius: RADIUS.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },

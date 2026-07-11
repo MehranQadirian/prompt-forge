@@ -21,7 +21,6 @@ import { useSettingsStore } from '../src/stores/settingsStore';
 import { useTheme } from '../src/theme/useTheme';
 import { PlaceholderBar } from '../src/components/PlaceholderBar';
 import { FindReplace } from '../src/components/FindReplace';
-import { UndoRedoBar } from '../src/components/UndoRedoBar';
 import { VersionHistoryModal } from '../src/components/VersionHistoryModal';
 import { ColorPickerModal } from '../src/components/ColorPickerModal';
 import { CategoryTag } from '../src/components/CategoryTag';
@@ -34,7 +33,9 @@ import { useHistoryState } from '../src/hooks/useHistory';
 import { useEnhance } from '../src/hooks/useEnhance';
 import { EnhanceButton } from '../src/components/EnhanceButton';
 import { EnhancedPromptSheet } from '../src/components/EnhancedPromptSheet';
-import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE, TYPOGRAPHY } from '../src/constants';
+import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY } from '../src/constants';
+
+const BTN_SIZE = 32;
 
 export default function EditorScreen() {
   const router = useRouter();
@@ -150,11 +151,11 @@ export default function EditorScreen() {
         if (restored) {
           setTitle(restored.title);
           setCategory(restored.category);
-          history.setValue(restored.content);
+          history.recordAtomic(restored.content);
         }
       }
     },
-    [id, history.setValue]
+    [id, history.recordAtomic]
   );
 
   const handleDeleteVersion = useCallback(
@@ -222,10 +223,10 @@ export default function EditorScreen() {
       if (!query) return;
       const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       const newContent = history.present.replace(regex, replaceWith);
-      history.setValue(newContent);
+      history.recordAtomic(newContent);
       if (id) updatePrompt(id, { content: newContent });
     },
-    [history.present, id, updatePrompt, history.setValue]
+    [history.present, id, updatePrompt, history.recordAtomic]
   );
 
   const handleReplaceAll = useCallback(
@@ -233,11 +234,11 @@ export default function EditorScreen() {
       if (!query) return;
       const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
       const newContent = history.present.replace(regex, replaceWith);
-      history.setValue(newContent);
+      history.recordAtomic(newContent);
       if (id) updatePrompt(id, { content: newContent });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
-    [history.present, id, updatePrompt, history.setValue]
+    [history.present, id, updatePrompt, history.recordAtomic]
   );
 
   const handleNavigateMatch = useCallback(
@@ -263,26 +264,26 @@ export default function EditorScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await enhance(history.present, versionCounterRef.current);
     if (result?.type === 'replace' && result.content) {
-      history.setValue(result.content);
+      history.recordAtomic(result.content);
       if (id) updatePrompt(id, { content: result.content });
     }
-  }, [enhance, history.present, history.setValue, id, updatePrompt]);
+  }, [enhance, history.present, history.recordAtomic, id, updatePrompt]);
 
   const handleEnhancedReplace = useCallback(() => {
     if (enhancedResult) {
-      history.setValue(enhancedResult);
+      history.recordAtomic(enhancedResult);
       if (id) updatePrompt(id, { content: enhancedResult });
     }
-  }, [enhancedResult, history.setValue, id, updatePrompt]);
+  }, [enhancedResult, history.recordAtomic, id, updatePrompt]);
 
   const handleEnhancedInsertBelow = useCallback(() => {
     if (enhancedResult) {
       const separator = history.present ? '\n\n' : '';
       const newContent = history.present + separator + enhancedResult;
-      history.setValue(newContent);
+      history.recordAtomic(newContent);
       if (id) updatePrompt(id, { content: newContent });
     }
-  }, [enhancedResult, history.present, history.setValue, id, updatePrompt]);
+  }, [enhancedResult, history.present, history.recordAtomic, id, updatePrompt]);
 
   const handleEnhancedCopy = useCallback(async () => {
     if (enhancedResult) {
@@ -301,6 +302,7 @@ export default function EditorScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+      {/* Header */}
       <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => {
@@ -313,10 +315,10 @@ export default function EditorScreen() {
           hitSlop={8}
           style={({ pressed }) => [
             styles.headerBtn,
-            { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
+            { opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
+          <Ionicons name="arrow-back" size={ICON_SIZE.sm} color={c.onBackground} />
         </Pressable>
 
         <View style={styles.headerCenter}>
@@ -326,12 +328,36 @@ export default function EditorScreen() {
         </View>
 
         <View style={styles.headerActions}>
-          <UndoRedoBar
-            canUndo={history.canUndo}
-            canRedo={history.canRedo}
-            onUndo={history.undo}
-            onRedo={history.redo}
-          />
+          <Pressable
+            onPress={history.undo}
+            disabled={!history.canUndo}
+            accessibilityRole="button"
+            accessibilityLabel="Undo"
+            accessibilityState={{ disabled: !history.canUndo }}
+            android_ripple={{ color: c.onBackground + '14', borderless: true }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.headerBtn,
+              { opacity: pressed ? 0.7 : (history.canUndo ? 1 : 0.38) },
+            ]}
+          >
+            <Ionicons name="arrow-undo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
+          </Pressable>
+          <Pressable
+            onPress={history.redo}
+            disabled={!history.canRedo}
+            accessibilityRole="button"
+            accessibilityLabel="Redo"
+            accessibilityState={{ disabled: !history.canRedo }}
+            android_ripple={{ color: c.onBackground + '14', borderless: true }}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.headerBtn,
+              { opacity: pressed ? 0.7 : (history.canRedo ? 1 : 0.38) },
+            ]}
+          >
+            <Ionicons name="arrow-redo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
+          </Pressable>
           <Pressable
             onPress={() => setShowFindReplace(!showFindReplace)}
             accessibilityRole="button"
@@ -340,10 +366,10 @@ export default function EditorScreen() {
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
-              { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
+              { opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <Ionicons name="search" size={ICON_SIZE.md} color={showFindReplace ? c.primary : c.onSurfaceVariant} />
+            <Ionicons name="search" size={ICON_SIZE.sm} color={showFindReplace ? c.primary : c.onSurfaceVariant} />
           </Pressable>
         </View>
       </View>
@@ -361,58 +387,61 @@ export default function EditorScreen() {
             onNavigateMatch={handleNavigateMatch}
           />
 
-          <TextInput
-            ref={titleRef}
-            style={[styles.titleInput, { color: c.onBackground, textAlign: isRTL ? 'right' : 'left' }]}
-            value={title}
-            onChangeText={handleTitleChange}
-            placeholder="Prompt title..."
-            placeholderTextColor={c.disabled}
-            returnKeyType="next"
-            onSubmitEditing={() => contentRef.current?.focus()}
-            accessibilityLabel="Prompt title"
-          />
+          {/* Title row: color dot + title input */}
+          <View style={styles.titleRow}>
+            <Pressable
+              onPress={() => setShowColorPicker(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Change prompt color"
+              android_ripple={{ color: c.onBackground + '14', borderless: true }}
+              hitSlop={4}
+              style={({ pressed }) => [
+                styles.colorDot,
+                { backgroundColor: prompt.color || c.primary, opacity: pressed ? 0.7 : 1 },
+              ]}
+            />
+            <TextInput
+              ref={titleRef}
+              style={[styles.titleInput, { color: c.onBackground, textAlign: isRTL ? 'right' : 'left' }]}
+              value={title}
+              onChangeText={handleTitleChange}
+              placeholder="Prompt title..."
+              placeholderTextColor={c.disabled}
+              returnKeyType="next"
+              onSubmitEditing={() => contentRef.current?.focus()}
+              accessibilityLabel="Prompt title"
+            />
+          </View>
 
-          <Pressable
-            onPress={() => setShowColorPicker(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Change prompt color"
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
-            style={({ pressed }) => [
-              styles.colorIndicator,
-              { backgroundColor: prompt.color || c.primary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          />
-
-          <View style={styles.categoryRow}>
+          {/* Category row: input + tags */}
+          <View style={styles.categorySection}>
             <TextInput
               style={[styles.categoryInput, { color: c.onBackground, backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}
               value={category}
               onChangeText={handleCategoryChange}
-              placeholder="Category..."
+              placeholder="Category"
               placeholderTextColor={c.disabled}
               accessibilityLabel="Category name"
             />
+            <FlatList
+              horizontal
+              data={categoryData}
+              renderItem={({ item }) => (
+                <CategoryTag
+                  name={item.name}
+                  isSelected={category === item.name}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setCategory(item.name);
+                    if (id) updatePrompt(id, { category: item.name });
+                  }}
+                />
+              )}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryList}
+            />
           </View>
-
-          <FlatList
-            horizontal
-            data={categoryData}
-            renderItem={({ item }) => (
-              <CategoryTag
-                name={item.name}
-                isSelected={category === item.name}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setCategory(item.name);
-                  if (id) updatePrompt(id, { category: item.name });
-                }}
-              />
-            )}
-            keyExtractor={(item) => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryList}
-          />
 
           {placeholders.length > 0 && <PlaceholderBar text={history.present} onTextChange={handleContentChange} promptId={id} />}
 
@@ -437,6 +466,7 @@ export default function EditorScreen() {
           />
         </ScrollView>
 
+        {/* Bottom toolbar */}
         <View style={[styles.toolbar, { backgroundColor: c.surface, borderTopColor: c.outlineVariant }]}>
           {showStats && (
             <View style={[styles.statsRow, { borderBottomColor: c.outlineVariant }]}>
@@ -477,6 +507,7 @@ export default function EditorScreen() {
               accessibilityRole="button"
               accessibilityLabel={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
               android_ripple={{ color: c.onPrimary + '30' }}
+              hitSlop={8}
               style={({ pressed }) => [
                 styles.copyBtn,
                 {
@@ -485,7 +516,7 @@ export default function EditorScreen() {
                 },
               ]}
             >
-              <Ionicons name={copied ? 'checkmark' : 'copy'} size={ICON_SIZE.md} color={c.onPrimary} />
+              <Ionicons name={copied ? 'checkmark' : 'copy'} size={ICON_SIZE.sm} color={c.onPrimary} />
             </Pressable>
           </View>
         </View>
@@ -526,64 +557,91 @@ export default function EditorScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
+
+  // Header — compact
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
+    width: BTN_SIZE,
+    height: BTN_SIZE,
+    borderRadius: RADIUS.xs,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerCenter: { flex: 1, alignItems: 'center', paddingHorizontal: SPACING.sm },
-  headerTitle: { fontSize: TYPOGRAPHY.caption.fontSize, fontWeight: TYPOGRAPHY.caption.fontWeight },
+  headerCenter: { flex: 1, alignItems: 'center', paddingHorizontal: SPACING.xs },
+  headerTitle: { fontSize: TYPOGRAPHY.small.fontSize, fontWeight: TYPOGRAPHY.small.fontWeight },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+
+  // Scroll
   scrollContent: { flex: 1 },
-  scrollContainer: { padding: SPACING.lg },
-  titleInput: { fontSize: TYPOGRAPHY.heading.fontSize, fontWeight: TYPOGRAPHY.heading.fontWeight, marginBottom: SPACING.xs, padding: 0 },
-  colorIndicator: { width: 40, height: 4, borderRadius: SPACING.xs, marginBottom: SPACING.lg },
-  categoryRow: { marginBottom: SPACING.sm },
+  scrollContainer: { padding: SPACING.md },
+
+  // Title row — inline color dot + title
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  colorDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  titleInput: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.bodySemibold.fontSize,
+    fontWeight: TYPOGRAPHY.bodySemibold.fontWeight,
+    padding: 0,
+  },
+
+  // Category section
+  categorySection: {
+    marginBottom: SPACING.sm,
+  },
   categoryInput: {
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    paddingHorizontal: SPACING.md,
+    height: 36,
+    borderRadius: RADIUS.xs,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: SPACING.sm,
     fontSize: TYPOGRAPHY.captionMedium.fontSize,
     fontWeight: TYPOGRAPHY.captionMedium.fontWeight,
+    marginBottom: SPACING.xs,
   },
-  categoryList: { paddingBottom: SPACING.md },
+  categoryList: { paddingBottom: SPACING.xs },
+
+  // Content
   contentInput: { lineHeight: 24, minHeight: 300, padding: 0 },
-  toolbar: { borderTopWidth: 1 },
+
+  // Toolbar — compact
+  toolbar: { borderTopWidth: StyleSheet.hairlineWidth },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  statDivider: { width: 1, height: 24, marginHorizontal: SPACING.sm },
+  statDivider: { width: 1, height: 16, marginHorizontal: SPACING.sm },
   actions: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.lg,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
   },
   copyBtn: {
-    flexDirection: 'row',
+    width: BTN_SIZE,
+    height: BTN_SIZE,
     alignItems: 'center',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.xxl,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    borderRadius: RADIUS.xs,
   },
-  copyText: { fontSize: TYPOGRAPHY.captionSemibold.fontSize, fontWeight: TYPOGRAPHY.captionSemibold.fontWeight },
 });

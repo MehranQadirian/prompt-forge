@@ -74,7 +74,7 @@ export function CategoryTag({ name, isSelected, onPress, onLongPress, onDragStar
       <Pressable
         onPress={onPress}
         onLongPress={longPressHandler}
-        delayLongPress={500}
+        delayLongPress={300}
         accessibilityRole="button"
         accessibilityLabel={`${name} category${isSelected ? ', selected' : ''}`}
         accessibilityState={{ selected: isSelected }}

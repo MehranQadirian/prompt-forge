@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
-import { PROMPT_COLORS } from '../theme';
+import { getPromptColors } from '../theme';
 import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE } from '../constants';
 import { hapticLight } from '../constants/haptics';
 import { BottomSheet, BottomSheetRef } from './BottomSheet';
@@ -17,6 +17,7 @@ interface ColorPickerModalProps {
 export function ColorPickerModal({ visible, currentColor, onClose, onSelect }: ColorPickerModalProps) {
   const { theme } = useTheme();
   const c = theme.color;
+  const promptColors = getPromptColors(theme.mode);
   const sheetRef = useRef<BottomSheetRef>(null);
 
   useEffect(() => {
@@ -48,7 +49,7 @@ export function ColorPickerModal({ visible, currentColor, onClose, onSelect }: C
 
       {/* Color grid */}
       <View style={styles.grid}>
-        {PROMPT_COLORS.map((color) => {
+        {promptColors.map((color) => {
           const isSelected = currentColor === color;
           return (
             <Pressable

@@ -42,7 +42,7 @@ export const ICON_SIZE = { sm: 16, md: 20, lg: 24, xl: 32, list: 20, appbar: 24 
 
 export const TOUCH_TARGET = 48;
 
-export const FAVORITE_COLOR = '#F1FA8C';
+export const FAVORITE_COLOR = '#FFD700';
 
 export const DEFAULT_CATEGORIES = [
   { id: 'cat-writing', name: 'Writing', color: '#7FBF8B' },

@@ -67,8 +67,93 @@ export function EnhancedPromptSheet({
     sheetRef.current?.dismiss();
   };
 
+  const actionsFooter = !error ? (
+    <View style={styles.actions}>
+      <Pressable
+        onPress={handleReplace}
+        accessibilityRole="button"
+        accessibilityLabel="Replace current text"
+        android_ripple={{ color: c.onPrimary + '30' }}
+        style={({ pressed }) => [
+          styles.primaryBtn,
+          { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <Ionicons name="swap-horizontal" size={ICON_SIZE.sm} color={c.onPrimary} />
+        <Text style={[styles.primaryBtnText, { color: c.onPrimary }]}>
+          Replace Current
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleInsertBelow}
+        accessibilityRole="button"
+        accessibilityLabel="Insert below current text"
+        android_ripple={{ color: c.primary + '14' }}
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <Ionicons name="arrow-down" size={ICON_SIZE.sm} color={c.primary} />
+        <Text style={[styles.secondaryBtnText, { color: c.primary }]}>
+          Insert Below
+        </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleCopy}
+        accessibilityRole="button"
+        accessibilityLabel="Copy to clipboard"
+        android_ripple={{ color: c.primary + '14' }}
+        style={({ pressed }) => [
+          styles.secondaryBtn,
+          { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <Ionicons name="copy" size={ICON_SIZE.sm} color={c.primary} />
+        <Text style={[styles.secondaryBtnText, { color: c.primary }]}>Copy</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleClose}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss"
+        android_ripple={{ color: c.onBackground + '14' }}
+        style={({ pressed }) => [
+          styles.tertiaryBtn,
+          { opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <Text style={[styles.tertiaryBtnText, { color: c.onSurfaceVariant }]}>
+          Dismiss
+        </Text>
+      </Pressable>
+    </View>
+  ) : error.code === 'INVALID_KEY' && onOpenSettings ? (
+    <Pressable
+      onPress={() => {
+        hapticMedium();
+        onOpenSettings();
+        sheetRef.current?.dismiss();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel="Open AI Settings"
+      android_ripple={{ color: c.primary + '30' }}
+      style={({ pressed }) => [
+        styles.primaryBtn,
+        { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      <Ionicons name="key" size={ICON_SIZE.sm} color={c.onPrimary} />
+      <Text style={[styles.primaryBtnText, { color: c.onPrimary }]}>
+        Configure API Key
+      </Text>
+    </Pressable>
+  ) : null;
+
   return (
-    <BottomSheet ref={sheetRef} onClose={onClose}>
+    <BottomSheet ref={sheetRef} footer={actionsFooter} onClose={onClose}>
       {/* Header */}
       <View style={styles.header}>
         <View
@@ -102,27 +187,6 @@ export function EnhancedPromptSheet({
             <Ionicons name="warning" size={ICON_SIZE.sm} color={c.error} />
             <Text style={[styles.errorText, { color: c.error }]}>{error.message}</Text>
           </View>
-          {error.code === 'INVALID_KEY' && onOpenSettings && (
-            <Pressable
-              onPress={() => {
-                hapticMedium();
-                onOpenSettings();
-                sheetRef.current?.dismiss();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Open AI Settings"
-              android_ripple={{ color: c.primary + '30' }}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Ionicons name="key" size={ICON_SIZE.sm} color={c.onPrimary} />
-              <Text style={[styles.primaryBtnText, { color: c.onPrimary }]}>
-                Configure API Key
-              </Text>
-            </Pressable>
-          )}
         </>
       ) : (
         <ScrollView
@@ -137,72 +201,6 @@ export function EnhancedPromptSheet({
             {enhancedText}
           </Text>
         </ScrollView>
-      )}
-
-      {/* Actions */}
-      {!error && (
-        <View style={styles.actions}>
-          <Pressable
-            onPress={handleReplace}
-            accessibilityRole="button"
-            accessibilityLabel="Replace current text"
-            android_ripple={{ color: c.onPrimary + '30' }}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Ionicons name="swap-horizontal" size={ICON_SIZE.sm} color={c.onPrimary} />
-            <Text style={[styles.primaryBtnText, { color: c.onPrimary }]}>
-              Replace Current
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleInsertBelow}
-            accessibilityRole="button"
-            accessibilityLabel="Insert below current text"
-            android_ripple={{ color: c.primary + '14' }}
-            style={({ pressed }) => [
-              styles.secondaryBtn,
-              { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Ionicons name="arrow-down" size={ICON_SIZE.sm} color={c.primary} />
-            <Text style={[styles.secondaryBtnText, { color: c.primary }]}>
-              Insert Below
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleCopy}
-            accessibilityRole="button"
-            accessibilityLabel="Copy to clipboard"
-            android_ripple={{ color: c.primary + '14' }}
-            style={({ pressed }) => [
-              styles.secondaryBtn,
-              { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Ionicons name="copy" size={ICON_SIZE.sm} color={c.primary} />
-            <Text style={[styles.secondaryBtnText, { color: c.primary }]}>Copy</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={handleClose}
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss"
-            android_ripple={{ color: c.onBackground + '14' }}
-            style={({ pressed }) => [
-              styles.tertiaryBtn,
-              { opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text style={[styles.tertiaryBtnText, { color: c.onSurfaceVariant }]}>
-              Dismiss
-            </Text>
-          </Pressable>
-        </View>
       )}
     </BottomSheet>
   );

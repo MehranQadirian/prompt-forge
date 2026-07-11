@@ -117,7 +117,9 @@ export default function PlaceholderEditScreen() {
         <View style={styles.content}>
           <View style={[styles.placeholderBadge, { backgroundColor: c.primary + '18', borderColor: c.primary + '30' }]}>
             <Ionicons name="flash" size={ICON_SIZE.sm} color={c.primary} />
-            <Text style={[styles.placeholderText, { color: c.primary }]}>{displayLabel}</Text>
+            <Text style={[styles.placeholderText, { color: c.primary }]} numberOfLines={1}>
+              {displayLabel}
+            </Text>
           </View>
 
           <TextInput
@@ -224,6 +226,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
     borderWidth: 1,
     alignSelf: 'flex-start',
+    maxWidth: '100%',
+    flexShrink: 1,
     marginBottom: SPACING.lg,
   },
   placeholderText: {

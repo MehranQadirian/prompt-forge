@@ -45,6 +45,32 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
     setShowDeleteConfirm(false);
   }, []);
 
+  const footer = (
+    <View style={styles.footer}>
+      <Pressable
+        onPress={handleDeletePress}
+        accessibilityRole="button"
+        accessibilityLabel="Delete prompt"
+        android_ripple={{ color: c.error + '14' }}
+        style={({ pressed }) => [styles.dangerBtn, { opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
+        <Text style={[styles.dangerText, { color: c.error }]}>Delete</Text>
+      </Pressable>
+
+      <Pressable
+        onPress={handleEdit}
+        accessibilityRole="button"
+        accessibilityLabel="Edit prompt"
+        android_ripple={{ color: c.onPrimary + '30' }}
+        style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onPrimary} />
+        <Text style={[styles.primaryText, { color: c.onPrimary }]}>Edit</Text>
+      </Pressable>
+    </View>
+  );
+
   return (
     <>
       {/* Header */}
@@ -102,31 +128,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
         <MarkdownRenderer content={prompt.content} />
       </View>
 
-      {/* Action Footer */}
-      <View style={[styles.footer, { borderTopColor: c.outlineVariant }]}>
-        <Pressable
-          onPress={handleDeletePress}
-          accessibilityRole="button"
-          accessibilityLabel="Delete prompt"
-          android_ripple={{ color: c.error + '14' }}
-          style={({ pressed }) => [styles.dangerBtn, { opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
-          <Text style={[styles.dangerText, { color: c.error }]}>Delete</Text>
-        </Pressable>
-
-        <Pressable
-          onPress={handleEdit}
-          accessibilityRole="button"
-          accessibilityLabel="Edit prompt"
-          android_ripple={{ color: c.onPrimary + '30' }}
-          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onPrimary} />
-          <Text style={[styles.primaryText, { color: c.onPrimary }]}>Edit</Text>
-        </Pressable>
-      </View>
-
       {/* Delete Confirmation Dialog */}
       <Modal
         visible={showDeleteConfirm}
@@ -176,6 +177,42 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
   );
 }
 
+// This component is used as children of BottomSheet via BottomSheetContext
+// The footer is passed separately via the footer prop pattern
+PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, onEdit }: {
+  prompt: Prompt;
+  onDelete: (p: Prompt) => void;
+  onEdit: (p: Prompt) => void;
+}) {
+  const { theme } = useTheme();
+  const c = theme.color;
+
+  return (
+    <View style={styles.footer}>
+      <Pressable
+        onPress={() => { hapticHeavy(); onDelete(prompt); }}
+        accessibilityRole="button"
+        accessibilityLabel="Delete prompt"
+        android_ripple={{ color: c.error + '14' }}
+        style={({ pressed }) => [styles.dangerBtn, { opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
+        <Text style={[styles.dangerText, { color: c.error }]}>Delete</Text>
+      </Pressable>
+      <Pressable
+        onPress={() => { hapticMedium(); onEdit(prompt); }}
+        accessibilityRole="button"
+        accessibilityLabel="Edit prompt"
+        android_ripple={{ color: c.onPrimary + '30' }}
+        style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onPrimary} />
+        <Text style={[styles.primaryText, { color: c.onPrimary }]}>Edit</Text>
+      </Pressable>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
@@ -219,12 +256,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   tagRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
@@ -243,13 +274,10 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 1,
     padding: SPACING.lg,
-    marginBottom: SPACING.lg,
   },
   footer: {
     flexDirection: 'row',
     gap: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   dangerBtn: {
     flexDirection: 'row',

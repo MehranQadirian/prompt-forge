@@ -84,21 +84,28 @@ export default function TemplatesScreen() {
   const handleUseTemplate = useCallback((template: PromptTemplate) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     hideBottomSheet();
-    if (hasCategory(template.category)) {
-      const id = addPrompt(template.title, template.content, template.category);
-      router.push(`/editor?id=${id}`);
-    } else {
-      setPendingTemplate(template);
-      setCategoryConfirmVisible(true);
-    }
+    // Wait for dismiss animation to complete before proceeding
+    setTimeout(() => {
+      if (hasCategory(template.category)) {
+        const id = addPrompt(template.title, template.content, template.category);
+        router.push(`/editor?id=${id}`);
+      } else {
+        setPendingTemplate(template);
+        setCategoryConfirmVisible(true);
+      }
+    }, 350);
   }, [addPrompt, router, hasCategory, hideBottomSheet]);
 
   const handleConfirmCreateCategory = useCallback(() => {
     if (!pendingTemplate) return;
-    addCustomCategory(pendingTemplate.category);
     const id = addPrompt(pendingTemplate.title, pendingTemplate.content, pendingTemplate.category);
+    addCustomCategory(pendingTemplate.category);
+    // Reset ALL modal state before navigation
     setCategoryConfirmVisible(false);
     setPendingTemplate(null);
+    setShowCategoryPicker(false);
+    setNewCatName('');
+    Keyboard.dismiss();
     router.push(`/editor?id=${id}`);
   }, [pendingTemplate, addCustomCategory, addPrompt, router]);
 
@@ -109,9 +116,12 @@ export default function TemplatesScreen() {
   const handleSelectCategory = useCallback((catName: string) => {
     if (!pendingTemplate) return;
     const id = addPrompt(pendingTemplate.title, pendingTemplate.content, catName);
+    // Reset ALL modal state before navigation
     setCategoryConfirmVisible(false);
     setShowCategoryPicker(false);
     setPendingTemplate(null);
+    setNewCatName('');
+    Keyboard.dismiss();
     router.push(`/editor?id=${id}`);
   }, [pendingTemplate, addPrompt, router]);
 
@@ -120,6 +130,7 @@ export default function TemplatesScreen() {
     if (!name || !pendingTemplate) return;
     addCustomCategory(name);
     const id = addPrompt(pendingTemplate.title, pendingTemplate.content, name);
+    // Reset ALL modal state before navigation
     setCategoryConfirmVisible(false);
     setShowCategoryPicker(false);
     setPendingTemplate(null);
@@ -129,13 +140,17 @@ export default function TemplatesScreen() {
   }, [newCatName, pendingTemplate, addCustomCategory, addPrompt, router]);
 
   const handleCardPress = useCallback((template: PromptTemplate) => {
-    showBottomSheet(
+    const content = (
       <TemplatePreviewContent
         template={template}
         onClose={hideBottomSheet}
         onUse={handleUseTemplate}
       />
     );
+    const footer = (
+      <TemplatePreviewContent.Footer template={template} onUse={handleUseTemplate} />
+    );
+    showBottomSheet(content, footer);
   }, [showBottomSheet, hideBottomSheet, handleUseTemplate]);
 
   const handleCardLongPress = useCallback((template: PromptTemplate) => {
@@ -249,7 +264,7 @@ export default function TemplatesScreen() {
 
       <BottomSheet
         ref={categorySheetRef}
-        onClose={() => { setCategoryConfirmVisible(false); setShowCategoryPicker(false); setPendingTemplate(null); }}
+        onClose={() => { setCategoryConfirmVisible(false); setShowCategoryPicker(false); setPendingTemplate(null); setNewCatName(''); }}
       >
         {!showCategoryPicker ? (
           <>

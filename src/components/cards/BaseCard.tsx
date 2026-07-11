@@ -28,6 +28,7 @@ export function BaseCard({
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
+      delayLongPress={300}
       disabled={disabled}
       android_ripple={{ color: c.onBackground + '14' }}
       hitSlop={8}
@@ -55,7 +56,6 @@ const styles = {
     padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 12,
   } as ViewStyle,
   disabled: {
     opacity: 0.5,

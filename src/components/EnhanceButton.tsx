@@ -2,7 +2,9 @@ import React from 'react';
 import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
-import { TOUCH_TARGET, ICON_SIZE } from '../constants';
+import { ICON_SIZE } from '../constants';
+
+const BTN_SIZE = 32;
 
 interface EnhanceButtonProps {
   isEnhancing: boolean;
@@ -31,7 +33,7 @@ export function EnhanceButton({ isEnhancing, onPress }: EnhanceButtonProps) {
       {isEnhancing ? (
         <ActivityIndicator size="small" color={c.primary} />
       ) : (
-        <Ionicons name="sparkles" size={ICON_SIZE.md} color={c.primary} />
+        <Ionicons name="sparkles" size={ICON_SIZE.sm} color={c.primary} />
       )}
     </Pressable>
   );
@@ -39,8 +41,8 @@ export function EnhanceButton({ isEnhancing, onPress }: EnhanceButtonProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
+    width: BTN_SIZE,
+    height: BTN_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },

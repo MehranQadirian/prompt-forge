@@ -17,11 +17,6 @@ export function TemplatePreviewContent({ template, onClose, onUse }: TemplatePre
   const { theme } = useTheme();
   const c = theme.color;
 
-  const handleUse = useCallback(() => {
-    hapticMedium();
-    onUse(template);
-  }, [template, onUse]);
-
   return (
     <>
       {/* Header */}
@@ -57,23 +52,36 @@ export function TemplatePreviewContent({ template, onClose, onUse }: TemplatePre
       <View style={[styles.contentBox, { backgroundColor: c.surface, borderColor: c.outlineVariant }]}>
         <MarkdownRenderer content={template.content} />
       </View>
-
-      {/* Action Footer */}
-      <View style={[styles.footer, { borderTopColor: c.outlineVariant }]}>
-        <Pressable
-          onPress={handleUse}
-          accessibilityRole="button"
-          accessibilityLabel={`Use ${template.title} template`}
-          android_ripple={{ color: c.onPrimary + '30' }}
-          style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
-        >
-          <Ionicons name="add-circle-outline" size={ICON_SIZE.sm} color={c.onPrimary} />
-          <Text style={[styles.primaryText, { color: c.onPrimary }]}>Use in my own prompts</Text>
-        </Pressable>
-      </View>
     </>
   );
 }
+
+// Static footer component for use with BottomSheet footer prop
+TemplatePreviewContent.Footer = function TemplatePreviewFooter({ template, onUse }: {
+  template: PromptTemplate;
+  onUse: (template: PromptTemplate) => void;
+}) {
+  const { theme } = useTheme();
+  const c = theme.color;
+
+  const handleUse = useCallback(() => {
+    hapticMedium();
+    onUse(template);
+  }, [template, onUse]);
+
+  return (
+    <Pressable
+      onPress={handleUse}
+      accessibilityRole="button"
+      accessibilityLabel={`Use ${template.title} template`}
+      android_ripple={{ color: c.onPrimary + '30' }}
+      style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+    >
+      <Ionicons name="add-circle-outline" size={ICON_SIZE.sm} color={c.onPrimary} />
+      <Text style={[styles.primaryText, { color: c.onPrimary }]}>Use in my own prompts</Text>
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   header: {
@@ -101,12 +109,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 2,
   },
-  closeBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   description: {
     fontSize: 14,
     lineHeight: 20,
@@ -130,11 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 1,
     padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  footer: {
-    paddingTop: SPACING.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
   primaryBtn: {
     flexDirection: 'row',

@@ -109,25 +109,25 @@ export function ContextMenu({
         <MenuItem
           icon="pencil"
           label="Rename"
-          color={c.onBackground}
+          color={c.primary}
           onPress={() => handleAction(onRename)}
         />
         <MenuItem
           icon="copy"
           label="Duplicate"
-          color={c.onBackground}
+          color={c.primary}
           onPress={() => handleAction(onDuplicate)}
         />
         <MenuItem
           icon={prompt.isPinned ? 'pin' : 'pin-outline'}
           label={prompt.isPinned ? 'Unpin' : 'Pin'}
-          color={c.onBackground}
+          color={c.primary}
           onPress={() => handleAction(onTogglePin)}
         />
         <MenuItem
           icon={prompt.isFavorite ? 'star' : 'star-outline'}
           label={prompt.isFavorite ? 'Unfavorite' : 'Favorite'}
-          color={c.onBackground}
+          color={c.primary}
           onPress={() => handleAction(onToggleFavorite)}
         />
         <MenuItem

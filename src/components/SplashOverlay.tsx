@@ -1,16 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, AccessibilityInfo, Animated, Easing } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
-import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY } from '../constants';
+import { SPACING, TYPOGRAPHY } from '../constants';
 
-const ICON_DURATION = 500;
-const NAME_DELAY = 150;
-const NAME_DURATION = 400;
-const TAGLINE_DELAY = 300;
-const TAGLINE_DURATION = 400;
-const EXIT_DURATION = 300;
-const MIN_DISPLAY_MS = 1000;
+// Entrance timing
+const CONTAINER_FADE_IN = 600;
+const ICON_DELAY = 200;
+const ICON_DURATION = 800;
+const NAME_DELAY = 500;
+const NAME_DURATION = 600;
+const TAGLINE_DELAY = 800;
+const TAGLINE_DURATION = 500;
+// Exit timing
+const EXIT_DURATION = 500;
+// How long to keep splash visible after everything loads
+const MIN_DISPLAY_MS = 1800;
 
 interface SplashOverlayProps {
   loadingPromise: Promise<void>;
@@ -49,51 +53,63 @@ export default function SplashOverlay({ loadingPromise, onReady }: SplashOverlay
       return;
     }
 
-    Animated.parallel([
-      Animated.timing(containerOpacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(iconOpacity, {
-        toValue: 1,
-        duration: ICON_DURATION,
-        useNativeDriver: true,
-      }),
-      Animated.spring(iconScale, {
-        toValue: 1,
-        damping: 15,
-        stiffness: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Container fades in
+    Animated.timing(containerOpacity, {
+      toValue: 1,
+      duration: CONTAINER_FADE_IN,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
 
-    // Name — delayed
+    // Icon — delayed, scales up with spring + fades in
+    const iconTimer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(iconOpacity, {
+          toValue: 1,
+          duration: ICON_DURATION,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.spring(iconScale, {
+          toValue: 1,
+          damping: 12,
+          stiffness: 100,
+          mass: 0.8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, ICON_DELAY);
+
+    // Name — slides up and fades in
     const nameTimer = setTimeout(() => {
       Animated.parallel([
         Animated.timing(nameOpacity, {
           toValue: 1,
           duration: NAME_DURATION,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(nameTranslateY, {
           toValue: 0,
           duration: NAME_DURATION,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
       ]).start();
     }, NAME_DELAY);
 
-    // Tagline — delayed
+    // Tagline — fades in softly
     const taglineTimer = setTimeout(() => {
       Animated.timing(taglineOpacity, {
         toValue: 1,
         duration: TAGLINE_DURATION,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
     }, TAGLINE_DELAY);
 
     return () => {
+      clearTimeout(iconTimer);
       clearTimeout(nameTimer);
       clearTimeout(taglineTimer);
     };
@@ -112,11 +128,33 @@ export default function SplashOverlay({ loadingPromise, onReady }: SplashOverlay
         containerOpacity.setValue(0);
         onReady();
       } else {
-        Animated.timing(containerOpacity, {
-          toValue: 0,
-          duration: EXIT_DURATION,
-          useNativeDriver: true,
-        }).start(({ finished }) => {
+        // Fade out icon and text first, then container
+        Animated.parallel([
+          Animated.timing(iconOpacity, {
+            toValue: 0,
+            duration: EXIT_DURATION * 0.6,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(nameOpacity, {
+            toValue: 0,
+            duration: EXIT_DURATION * 0.5,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(taglineOpacity, {
+            toValue: 0,
+            duration: EXIT_DURATION * 0.4,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(containerOpacity, {
+            toValue: 0,
+            duration: EXIT_DURATION,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]).start(({ finished }) => {
           if (finished) {
             onReady();
           }
@@ -134,15 +172,11 @@ export default function SplashOverlay({ loadingPromise, onReady }: SplashOverlay
       style={[styles.container, { backgroundColor: c.background, opacity: containerOpacity }]}
     >
       <View style={styles.content}>
-        <Animated.View
-          style={[
-            styles.iconCircle,
-            { backgroundColor: c.primary },
-            { opacity: iconOpacity, transform: [{ scale: iconScale }] },
-          ]}
-        >
-          <Ionicons name="flash" size={ICON_SIZE.xl} color={c.onPrimary} />
-        </Animated.View>
+        <Animated.Image
+          source={require('../../assets/icon.png')}
+          style={[styles.icon, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}
+          resizeMode="contain"
+        />
 
         <Animated.Text
           style={[
@@ -174,13 +208,10 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.xl,
+  icon: {
+    width: 96,
+    height: 96,
+    marginBottom: SPACING.xxl,
   },
   appName: {
     ...TYPOGRAPHY.heading,

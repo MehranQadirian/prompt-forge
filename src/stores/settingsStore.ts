@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppSettings, ThemeVariant } from '../types';
+import { AppSettings, ThemeVariant, SwipeAction } from '../types';
 import { STORAGE_KEYS } from '../constants';
 
 interface SettingsState {
@@ -15,6 +15,8 @@ interface SettingsState {
   setOnboarded: () => void;
   setShowTokenCount: (show: boolean) => void;
   setFollowSystem: (follow: boolean) => void;
+  setSwipeLeftAction: (action: SwipeAction) => void;
+  setSwipeRightAction: (action: SwipeAction) => void;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -24,6 +26,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   hasOnboarded: false,
   showTokenCount: true,
   followSystem: false,
+  swipeLeftAction: 'edit',
+  swipeRightAction: 'delete',
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -91,6 +95,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setFollowSystem: (followSystem) => {
     set((state) => ({
       settings: { ...state.settings, followSystem },
+    }));
+    get().saveSettings();
+  },
+
+  setSwipeLeftAction: (swipeLeftAction) => {
+    set((state) => ({
+      settings: { ...state.settings, swipeLeftAction },
+    }));
+    get().saveSettings();
+  },
+
+  setSwipeRightAction: (swipeRightAction) => {
+    set((state) => ({
+      settings: { ...state.settings, swipeRightAction },
     }));
     get().saveSettings();
   },

@@ -1,6 +1,10 @@
 export {
   getThemeTokens,
   PROMPT_COLORS,
+  PROMPT_COLORS_DARK,
+  PROMPT_COLORS_LIGHT,
+  getPromptColors,
+  mapColorBetweenModes,
   allThemeVariants,
   darkThemeVariants,
   lightThemeVariants,

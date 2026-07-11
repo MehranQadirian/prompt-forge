@@ -29,11 +29,12 @@ export interface BottomSheetRef {
 
 interface BottomSheetProps {
   children: React.ReactNode;
+  footer?: React.ReactNode;
   onClose?: () => void;
 }
 
 export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
-  ({ children, onClose }, ref) => {
+  ({ children, footer, onClose }, ref) => {
     const { theme } = useTheme();
     const c = theme.color;
     const { height: screenHeight } = useWindowDimensions();
@@ -177,7 +178,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
             </GestureDetector>
 
             {/* Content — ScrollView handles its own touches */}
-            <Animated.View style={contentStyle}>
+            <Animated.View style={[contentStyle, styles.contentWrapper]}>
               <ScrollView
                 style={styles.scrollContent}
                 contentContainerStyle={styles.scrollContentContainer}
@@ -188,6 +189,13 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
               >
                 {children}
               </ScrollView>
+
+              {/* Footer — pinned outside ScrollView */}
+              {footer && (
+                <View style={[styles.footer, { borderTopColor: c.outlineVariant }]}>
+                  {footer}
+                </View>
+              )}
             </Animated.View>
           </Animated.View>
         </View>
@@ -227,12 +235,21 @@ const styles = StyleSheet.create({
     height: HANDLE_BAR_HEIGHT,
     borderRadius: 2.5,
   },
+  contentWrapper: {
+    flexShrink: 1,
+  },
   scrollContent: {
     flexGrow: 0,
     flexShrink: 1,
   },
   scrollContentContainer: {
     paddingHorizontal: SPACING.xl,
-    paddingBottom: SPACING.xxl,
+    paddingBottom: SPACING.lg,
+  },
+  footer: {
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });
