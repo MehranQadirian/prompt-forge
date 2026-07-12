@@ -11,7 +11,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Sharing from 'expo-sharing';
 
-const CURRENT_VERSION = '1.1.0';
+const CURRENT_VERSION = '1.2.0';
 const GITHUB_REPO = 'MehranQadirian/prompt-forge';
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const CHANGES_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/CHANGES.txt`;
