@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.1.0
+## v1.2.0
 ### Added
 - In-app APK download with real-time progress display
 - GitHub release notes display in About page
