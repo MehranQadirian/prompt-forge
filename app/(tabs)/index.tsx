@@ -967,7 +967,7 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: 100,
+    paddingBottom: 135,
   },
   empty: {
     alignItems: 'center',

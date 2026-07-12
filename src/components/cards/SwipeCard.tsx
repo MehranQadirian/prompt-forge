@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -23,9 +23,9 @@ const TAP_DISTANCE_THRESHOLD = 5;
 const TAP_VELOCITY_THRESHOLD = 100;
 
 const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 150,
-  mass: 1,
+  damping: 20,
+  stiffness: 300,
+  mass: 0.8,
   overshootClamping: true,
 };
 
@@ -38,7 +38,7 @@ interface SwipeCardProps {
   onRightAction?: () => void;
 }
 
-export function SwipeCard({
+export const SwipeCard = React.memo(function SwipeCard({
   children,
   cardId,
   leftAction = 'none',
@@ -52,6 +52,7 @@ export function SwipeCard({
   const openCardId = useSwipeStore((s) => s.openCardId);
   const setOpenCard = useSwipeStore((s) => s.setOpenCard);
   const clearOpenCard = useSwipeStore((s) => s.clearOpenCard);
+  const [cardPointerEvents, setCardPointerEvents] = useState<'auto' | 'box-none'>('auto');
 
   const hasLeftAction = leftAction !== 'none' && !!onLeftAction;
   const hasRightAction = rightAction !== 'none' && !!onRightAction;
@@ -60,6 +61,7 @@ export function SwipeCard({
   useEffect(() => {
     if (openCardId !== null && openCardId !== cardId && translateX.value !== 0) {
       translateX.value = withSpring(0, SPRING_CONFIG);
+      setCardPointerEvents('auto');
     }
   }, [openCardId, cardId]);
 
@@ -110,6 +112,7 @@ export function SwipeCard({
       if (isTap && translation !== 0) {
         // Tap on open card — close it
         translateX.value = withSpring(0, SPRING_CONFIG);
+        runOnJS(setCardPointerEvents)('auto');
         runOnJS(clearOpenCard)(cardId);
         return;
       }
@@ -128,25 +131,23 @@ export function SwipeCard({
       translateX.value = withSpring(target, SPRING_CONFIG);
 
       if (shouldOpen) {
+        runOnJS(setCardPointerEvents)('box-none');
         runOnJS(setOpenCard)(cardId);
       } else {
+        runOnJS(setCardPointerEvents)('auto');
         runOnJS(clearOpenCard)(cardId);
       }
     });
 
-  // Card animation — translateX + animated border radius
+  // Card animation — translateX
   const cardStyle = useAnimatedStyle(() => {
-    const leftReveal = clampValue(translateX.value / ACTION_WIDTH, 0, 1);
-    const rightReveal = clampValue(-translateX.value / ACTION_WIDTH, 0, 1);
-
     return {
       transform: [{ translateX: translateX.value }],
-      // Left action revealed (swipe right): card LEFT corners sharpen
-      borderTopLeftRadius: interpolate(leftReveal, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
-      borderBottomLeftRadius: interpolate(leftReveal, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
-      // Right action revealed (swipe left): card RIGHT corners sharpen
-      borderTopRightRadius: interpolate(rightReveal, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
-      borderBottomRightRadius: interpolate(rightReveal, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
+      // Keep card corners always rounded
+      borderTopLeftRadius: RADIUS.lg,
+      borderBottomLeftRadius: RADIUS.lg,
+      borderTopRightRadius: RADIUS.lg,
+      borderBottomRightRadius: RADIUS.lg,
     };
   });
 
@@ -164,12 +165,12 @@ export function SwipeCard({
 
   const leftActionStyle = useAnimatedStyle(() => ({
     opacity: interpolate(leftProgress.value, [0, 1], [0, 1], Extrapolation.CLAMP),
-    transform: [{ scale: interpolate(leftProgress.value, [0, 1], [0.8, 1], Extrapolation.CLAMP) }],
+    transform: [{ translateX: interpolate(leftProgress.value, [0, 1], [-ACTION_WIDTH * 0.3, 0], Extrapolation.CLAMP) }],
   }));
 
   const rightActionStyle = useAnimatedStyle(() => ({
     opacity: interpolate(rightProgress.value, [0, 1], [0, 1], Extrapolation.CLAMP),
-    transform: [{ scale: interpolate(rightProgress.value, [0, 1], [0.8, 1], Extrapolation.CLAMP) }],
+    transform: [{ translateX: interpolate(rightProgress.value, [0, 1], [ACTION_WIDTH * 0.3, 0], Extrapolation.CLAMP) }],
   }));
 
   return (
@@ -198,13 +199,13 @@ export function SwipeCard({
 
       {/* Foreground card — translates horizontally */}
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.card, cardStyle]}>
+        <Animated.View style={[styles.card, cardStyle]} pointerEvents={cardPointerEvents}>
           {children}
         </Animated.View>
       </GestureDetector>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

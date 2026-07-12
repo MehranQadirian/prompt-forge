@@ -17,7 +17,8 @@ interface ContextMenuProps {
   onTogglePin: () => void;
   onToggleFavorite: () => void;
   onColorSelect: (color: string) => void;
-  onSaveAsTemplate: () => void;
+  onSaveAsTemplate: (prompt: Prompt) => void;
+  onShare?: (prompt: Prompt) => void;
   onSelect?: () => void;
 }
 
@@ -32,6 +33,7 @@ export function ContextMenu({
   onToggleFavorite,
   onColorSelect,
   onSaveAsTemplate,
+  onShare,
   onSelect,
 }: ContextMenuProps) {
   const { theme } = useTheme();
@@ -131,10 +133,16 @@ export function ContextMenu({
           onPress={() => handleAction(onToggleFavorite)}
         />
         <MenuItem
+          icon="share-outline"
+          label="Share"
+          color={c.primary}
+          onPress={() => handleAction(() => onShare?.(prompt))}
+        />
+        <MenuItem
           icon="bookmark-outline"
           label="Save as Template"
           color={c.primary}
-          onPress={() => handleAction(onSaveAsTemplate)}
+          onPress={() => handleAction(() => onSaveAsTemplate(prompt))}
         />
 
         <View style={[styles.divider, { backgroundColor: c.outlineVariant }]} />

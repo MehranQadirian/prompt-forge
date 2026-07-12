@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, Keyboard, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Keyboard, TextInput, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePromptStore } from '../../src/stores/promptStore';
+import { useTemplateStore } from '../../src/stores/templateStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { DEFAULT_TEMPLATES } from '../../src/data/templates';
 import { PromptTemplate } from '../../src/types';
@@ -22,10 +23,16 @@ export default function TemplatesScreen() {
   const { theme } = useTheme();
   const c = theme.color;
   const { addPrompt, hasCategory, addCustomCategory, customCategories, prompts } = usePromptStore();
+  const { userTemplates, loadTemplates } = useTemplateStore();
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showMyTemplates, setShowMyTemplates] = useState(false);
   const [contextTemplate, setContextTemplate] = useState<PromptTemplate | null>(null);
   const [showContext, setShowContext] = useState(false);
   const { showBottomSheet, hideBottomSheet } = useBottomSheet();
@@ -46,10 +53,16 @@ export default function TemplatesScreen() {
   const categoryListRef = useRef<FlatList>(null);
   const scrollXRef = useRef(0);
 
-  const allTemplates = useMemo(() => DEFAULT_TEMPLATES, []);
+  const allTemplates = useMemo(() => [...DEFAULT_TEMPLATES, ...userTemplates], [userTemplates]);
 
   const filteredTemplates = useMemo(() => {
     let templates = allTemplates;
+
+    // Filter by user templates if toggle is on
+    if (showMyTemplates) {
+      templates = templates.filter((t) => !t.isSystem);
+    }
+
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       templates = templates.filter(
@@ -63,7 +76,7 @@ export default function TemplatesScreen() {
       templates = templates.filter((t) => t.category === selectedCategory);
     }
     return templates;
-  }, [allTemplates, searchQuery, selectedCategory]);
+  }, [allTemplates, searchQuery, selectedCategory, showMyTemplates]);
 
   useEffect(() => {
     if (categoryListRef.current && scrollXRef.current > 0) {
@@ -181,6 +194,22 @@ export default function TemplatesScreen() {
 
   const renderHeader = useCallback(() => (
     <View>
+      {/* Toggle for My Templates */}
+      <View style={styles.toggleRow}>
+        <Text style={[styles.toggleLabel, { color: c.onBackground }]}>
+          {showMyTemplates ? 'My Templates' : 'All Templates'}
+        </Text>
+        <Switch
+          value={showMyTemplates}
+          onValueChange={(value) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setShowMyTemplates(value);
+          }}
+          trackColor={{ false: c.outlineVariant, true: c.primary + '60' }}
+          thumbColor={showMyTemplates ? c.primary : c.onSurfaceVariant}
+        />
+      </View>
+
       <FlatList
         ref={categoryListRef}
         horizontal
@@ -211,7 +240,7 @@ export default function TemplatesScreen() {
         </Text>
       </View>
     </View>
-  ), [c, selectedCategory, allTemplates, filteredTemplates.length]);
+  ), [c, selectedCategory, allTemplates, filteredTemplates.length, showMyTemplates]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
@@ -233,6 +262,11 @@ export default function TemplatesScreen() {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        // Performance optimizations
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={8}
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={[styles.emptyIcon, { backgroundColor: c.primary + '18' }]}>
@@ -478,5 +512,15 @@ const styles = StyleSheet.create({
     flex: 1,
     ...TYPOGRAPHY.captionMedium,
     padding: 0,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.md,
+  },
+  toggleLabel: {
+    ...TYPOGRAPHY.bodyMedium,
   },
 });

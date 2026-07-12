@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/useTheme';
@@ -8,6 +8,7 @@ import { SPACING, RADIUS, ICON_SIZE, FAVORITE_COLOR, TYPOGRAPHY } from '../../co
 import { hapticLight, hapticMedium } from '../../constants/haptics';
 import { BaseCard } from './BaseCard';
 import { SwipeCard } from './SwipeCard';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface PromptCardProps {
   prompt: Prompt;
@@ -23,7 +24,7 @@ interface PromptCardProps {
   onRightAction?: () => void;
 }
 
-export function PromptCard({
+export const PromptCard = React.memo(function PromptCard({
   prompt,
   onPress,
   onLongPress,
@@ -38,7 +39,7 @@ export function PromptCard({
 }: PromptCardProps) {
   const { theme } = useTheme();
   const c = theme.color;
-  const isRTL = detectRTL(prompt.title + ' ' + prompt.content);
+  const isRTL = useMemo(() => detectRTL(prompt.title + ' ' + prompt.content), [prompt.title, prompt.content]);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handlePress = useCallback(() => {
@@ -51,8 +52,8 @@ export function PromptCard({
     onLongPress?.();
   }, [onLongPress]);
 
-  const preview = prompt.content.substring(0, 200);
-  const updatedAgo = getRelativeTime(prompt.updatedAt);
+  const preview = useMemo(() => prompt.content.substring(0, 200), [prompt.content]);
+  const updatedAgo = useMemo(() => getRelativeTime(prompt.updatedAt), [prompt.updatedAt]);
 
   return (
     <View style={{ marginBottom: 12 }}>
@@ -115,12 +116,21 @@ export function PromptCard({
           accessibilityLabel={isExpanded ? 'Collapse preview' : 'Expand preview'}
           accessibilityState={{ expanded: isExpanded }}
         >
-          <Text
-            style={[styles.preview, { color: c.onSurfaceVariant, textAlign: isRTL ? 'right' : 'left' }]}
-            numberOfLines={isExpanded ? 6 : 2}
-          >
-            {preview || 'Empty prompt...'}
-          </Text>
+          <View style={!isExpanded ? styles.previewTruncated : undefined}>
+            {preview ? (
+              <MarkdownRenderer
+                content={preview}
+                style={styles.previewMarkdown}
+              />
+            ) : (
+              <Text style={[styles.preview, { color: c.onSurfaceVariant }]}>
+                Empty prompt...
+              </Text>
+            )}
+          </View>
+          {!isExpanded && preview.length > 80 && (
+            <View style={[styles.fadeOverlay, { backgroundColor: c.surface }]} />
+          )}
           {preview.length > 80 && (
             <View style={styles.expandRow}>
               <Ionicons
@@ -150,12 +160,12 @@ export function PromptCard({
             <View style={styles.footerRight}>
               {prompt.isPinned && (
                 <View style={[styles.statusBadge, { backgroundColor: c.primary + '18' }]}>
-                  <Ionicons name="pin" size={10} color={c.primary} />
+                  <Ionicons name="pin" size={12} color={c.primary} />
                 </View>
               )}
               {prompt.isFavorite && (
                 <View style={[styles.statusBadge, { backgroundColor: FAVORITE_COLOR + '28' }]}>
-                  <Ionicons name="star" size={10} color={FAVORITE_COLOR} />
+                  <Ionicons name="star" size={12} color={FAVORITE_COLOR} />
                 </View>
               )}
               {onColorPress && (
@@ -195,7 +205,7 @@ export function PromptCard({
     </SwipeCard>
     </View>
   );
-}
+});
 
 function getRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -254,6 +264,21 @@ const styles = StyleSheet.create({
   previewContainer: {
     marginBottom: SPACING.sm,
   },
+  previewTruncated: {
+    maxHeight: 52,
+    overflow: 'hidden',
+  },
+  previewMarkdown: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    lineHeight: 20,
+  },
+  fadeOverlay: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    height: 20,
+  },
   preview: {
     fontSize: TYPOGRAPHY.caption.fontSize,
     lineHeight: 20,
@@ -291,9 +316,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   statusBadge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -301,14 +326,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
-    height: 18,
-    borderRadius: 9,
+    height: 22,
+    borderRadius: 11,
     gap: 4,
   },
   colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   timestamp: {
     fontSize: TYPOGRAPHY.small.fontSize,

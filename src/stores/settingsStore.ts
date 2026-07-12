@@ -3,12 +3,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppSettings, ThemeVariant, SwipeAction } from '../types';
 import { STORAGE_KEYS } from '../constants';
 
+// Debounced save utility
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+const SAVE_DEBOUNCE_MS = 500;
+
+function debounceSave(saveFn: () => Promise<void>) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveFn();
+  }, SAVE_DEBOUNCE_MS);
+}
+
 interface SettingsState {
   settings: AppSettings;
   isLoading: boolean;
 
   loadSettings: () => Promise<void>;
   saveSettings: () => Promise<void>;
+  debouncedSave: () => void;
   setTheme: (theme: ThemeVariant) => void;
   setFontSize: (size: number) => void;
   setFontFamily: (family: string) => void;
@@ -57,59 +69,63 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
+  debouncedSave: () => {
+    debounceSave(get().saveSettings);
+  },
+
   setTheme: (theme) => {
     set((state) => ({
       settings: { ...state.settings, theme },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setFontSize: (fontSize) => {
     set((state) => ({
       settings: { ...state.settings, fontSize },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setFontFamily: (fontFamily) => {
     set((state) => ({
       settings: { ...state.settings, fontFamily },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setOnboarded: () => {
     set((state) => ({
       settings: { ...state.settings, hasOnboarded: true },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setShowTokenCount: (showTokenCount) => {
     set((state) => ({
       settings: { ...state.settings, showTokenCount },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setFollowSystem: (followSystem) => {
     set((state) => ({
       settings: { ...state.settings, followSystem },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setSwipeLeftAction: (swipeLeftAction) => {
     set((state) => ({
       settings: { ...state.settings, swipeLeftAction },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 
   setSwipeRightAction: (swipeRightAction) => {
     set((state) => ({
       settings: { ...state.settings, swipeRightAction },
     }));
-    get().saveSettings();
+    get().debouncedSave();
   },
 }));

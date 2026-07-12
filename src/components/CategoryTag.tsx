@@ -20,7 +20,7 @@ interface CategoryTagProps {
   isReorderMode?: boolean;
 }
 
-export function CategoryTag({ name, isSelected, onPress, onLongPress, onDragStart, isReorderMode = false }: CategoryTagProps) {
+export const CategoryTag = React.memo(function CategoryTag({ name, isSelected, onPress, onLongPress, onDragStart, isReorderMode = false }: CategoryTagProps) {
   const { theme } = useTheme();
   const c = theme.color;
   const rotation = useSharedValue(0);
@@ -98,7 +98,7 @@ export function CategoryTag({ name, isSelected, onPress, onLongPress, onDragStar
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

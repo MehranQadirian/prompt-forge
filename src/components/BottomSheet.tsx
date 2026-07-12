@@ -17,10 +17,10 @@ const HANDLE_BAR_WIDTH = 40;
 const HANDLE_BAR_HEIGHT = 5;
 const DISMISS_THRESHOLD = 100;
 const VELOCITY_THRESHOLD = 500;
-const OPEN_SPRING = { damping: 22, stiffness: 220, mass: 0.9 };
-const CLOSE_SPRING = { damping: 28, stiffness: 280, mass: 1.0 };
-const BACKDROP_DURATION = 280;
-const CONTENT_FADE_DURATION = 200;
+const OPEN_SPRING = { damping: 25, stiffness: 350, mass: 0.8 };
+const CLOSE_SPRING = { damping: 30, stiffness: 400, mass: 0.9 };
+const BACKDROP_DURATION = 200;
+const CONTENT_FADE_DURATION = 150;
 
 export interface BottomSheetRef {
   present: () => void;

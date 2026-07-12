@@ -179,7 +179,7 @@ function parseBlocks(content: string): Block[] {
   return blocks;
 }
 
-function InlineText({ tokens, color, codeColor, codeBg }: {
+const InlineText = React.memo(function InlineText({ tokens, color, codeColor, codeBg }: {
   tokens: InlineToken[];
   color: string;
   codeColor: string;
@@ -243,9 +243,9 @@ function InlineText({ tokens, color, codeColor, codeBg }: {
       })}
     </>
   );
-}
+});
 
-export function MarkdownRenderer({ content, style }: MarkdownRendererProps) {
+export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, style }: MarkdownRendererProps) {
   const { theme } = useTheme();
   const c = theme.color;
 
@@ -415,7 +415,7 @@ export function MarkdownRenderer({ content, style }: MarkdownRendererProps) {
       })}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {},

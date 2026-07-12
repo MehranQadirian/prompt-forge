@@ -1,11 +1,12 @@
-import React, { useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useCallback, useState, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../theme/useTheme';
 import { PromptTemplate } from '../../types';
 import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY } from '../../constants';
 import { BaseCard } from './BaseCard';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface TemplateCardProps {
   template: PromptTemplate;
@@ -13,9 +14,10 @@ interface TemplateCardProps {
   onLongPress?: () => void;
 }
 
-export function TemplateCard({ template, onPress, onLongPress }: TemplateCardProps) {
+export const TemplateCard = React.memo(function TemplateCard({ template, onPress, onLongPress }: TemplateCardProps) {
   const { theme } = useTheme();
   const c = theme.color;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -27,6 +29,8 @@ export function TemplateCard({ template, onPress, onLongPress }: TemplateCardPro
     onLongPress?.();
   }, [onLongPress]);
 
+  const preview = useMemo(() => template.content.substring(0, 200), [template.content]);
+
   return (
     <View style={{ marginBottom: 12 }}>
     <BaseCard
@@ -35,6 +39,14 @@ export function TemplateCard({ template, onPress, onLongPress }: TemplateCardPro
       accessibilityLabel={`${template.title} template`}
       accessibilityHint="Tap to preview, long press for options"
     >
+      {/* System badge */}
+      {template.isSystem && (
+        <View style={[styles.systemBadge, { backgroundColor: c.primary + '20' }]}>
+          <Ionicons name="shield-checkmark" size={10} color={c.primary} />
+          <Text style={[styles.systemBadgeText, { color: c.primary }]}>System</Text>
+        </View>
+      )}
+
       {/* Header: Icon + Title + Chevron */}
       <View style={styles.header}>
         <View style={[styles.icon, { backgroundColor: c.primary + '18' }]}>
@@ -66,17 +78,71 @@ export function TemplateCard({ template, onPress, onLongPress }: TemplateCardPro
       )}
 
       {/* Content preview block */}
-      <View style={[styles.previewBlock, { backgroundColor: c.surface, borderColor: c.outlineVariant }]}>
-        <Text style={[styles.previewText, { color: c.disabled }]} numberOfLines={2}>
-          {template.content}
-        </Text>
-      </View>
+      <Pressable
+        onPress={() => setIsExpanded(!isExpanded)}
+        style={[styles.previewContainer, {
+          backgroundColor: c.surface,
+          borderColor: c.outlineVariant,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderRadius: RADIUS.sm,
+          padding: SPACING.sm,
+        }]}
+        accessibilityRole="button"
+        accessibilityLabel={isExpanded ? 'Collapse preview' : 'Expand preview'}
+        accessibilityState={{ expanded: isExpanded }}
+      >
+        <View style={!isExpanded ? styles.previewTruncated : undefined}>
+          {preview ? (
+            <MarkdownRenderer
+              content={preview}
+              style={styles.previewMarkdown}
+            />
+          ) : (
+            <Text style={[styles.preview, { color: c.onSurfaceVariant }]}>
+              Empty prompt...
+            </Text>
+          )}
+        </View>
+        {!isExpanded && preview.length > 80 && (
+          <View style={[styles.fadeOverlay, { backgroundColor: c.surface }]} />
+        )}
+        {preview.length > 80 && (
+          <View style={styles.expandRow}>
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color={c.onSurfaceVariant}
+            />
+          </View>
+        )}
+      </Pressable>
     </BaseCard>
     </View>
   );
-}
+}, (prev, next) => {
+  return prev.template.id === next.template.id
+    && prev.template.title === next.template.title
+    && prev.template.content === next.template.content
+    && prev.template.description === next.template.description
+    && prev.template.isSystem === next.template.isSystem;
+});
 
 const styles = StyleSheet.create({
+  systemBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.xs,
+  },
+  systemBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -121,14 +187,30 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.small.fontSize,
     fontWeight: '500',
   },
-  previewBlock: {
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    padding: SPACING.sm,
+  previewContainer: {
+    marginBottom: 0,
   },
-  previewText: {
-    fontSize: TYPOGRAPHY.labelSmall.fontSize,
-    lineHeight: 18,
-    fontFamily: 'monospace',
+  previewTruncated: {
+    maxHeight: 52,
+    overflow: 'hidden',
+  },
+  previewMarkdown: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    lineHeight: 20,
+  },
+  fadeOverlay: {
+    position: 'absolute',
+    bottom: 24,
+    left: 0,
+    right: 0,
+    height: 20,
+  },
+  preview: {
+    fontSize: TYPOGRAPHY.caption.fontSize,
+    lineHeight: 20,
+  },
+  expandRow: {
+    alignItems: 'center',
+    marginTop: SPACING.xs,
   },
 });

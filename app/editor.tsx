@@ -127,6 +127,24 @@ export default function EditorScreen() {
     return () => keyboardDidHide.remove();
   }, []);
 
+  // Auto-save version on editor exit if content has changed
+  const autoSaveVersion = useCallback(() => {
+    if (!id) return;
+    const currentContent = currentTextRef.current;
+    if (!currentContent.trim()) return;
+    const p = usePromptStore.getState().getPromptById(id);
+    if (!p) return;
+    const lastVersion = p.versions[p.versions.length - 1];
+    if (lastVersion && lastVersion.content === currentContent) return;
+    addVersion(id);
+  }, [id, addVersion]);
+
+  useEffect(() => {
+    return () => {
+      autoSaveVersion();
+    };
+  }, []);
+
   const handleCopy = useCallback(async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await Clipboard.setStringAsync(history.present);
@@ -262,12 +280,8 @@ export default function EditorScreen() {
 
   const handleEnhance = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const result = await enhance(history.present, versionCounterRef.current);
-    if (result?.type === 'replace' && result.content) {
-      history.recordAtomic(result.content);
-      if (id) updatePrompt(id, { content: result.content });
-    }
-  }, [enhance, history.present, history.recordAtomic, id, updatePrompt]);
+    await enhance(history.present);
+  }, [enhance, history.present]);
 
   const handleEnhancedReplace = useCallback(() => {
     if (enhancedResult) {
@@ -307,6 +321,7 @@ export default function EditorScreen() {
         <Pressable
           onPress={() => {
             history.commitNow(history.present);
+            autoSaveVersion();
             router.back();
           }}
           accessibilityRole="button"

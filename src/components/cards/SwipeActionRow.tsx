@@ -9,7 +9,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { SwipeAction } from '../../types';
 import { useTheme } from '../../theme/useTheme';
-import { ICON_SIZE, TYPOGRAPHY, SPACING, RADIUS } from '../../constants';
+import { ICON_SIZE, TYPOGRAPHY, SPACING, RADIUS, ACTION_COLORS } from '../../constants';
 import { hapticLight } from '../../constants/haptics';
 
 const ACTION_ICONS: Record<SwipeAction, string> = {
@@ -30,6 +30,16 @@ const ACTION_LABELS: Record<SwipeAction, string> = {
   none: '',
 };
 
+function getActionColor(action: SwipeAction, themeColors: Record<string, string>): string {
+  const colorValue = ACTION_COLORS[action];
+  if (!colorValue) return themeColors.primary;
+  // Check if it's a theme color key (like 'primary', 'error')
+  if (colorValue === 'primary') return themeColors.primary;
+  if (colorValue === 'error') return themeColors.error;
+  // Otherwise it's a direct hex color
+  return colorValue;
+}
+
 export const ACTION_WIDTH = 72;
 
 interface SwipeActionRowProps {
@@ -40,7 +50,7 @@ interface SwipeActionRowProps {
   onPress: () => void;
 }
 
-export function SwipeActionRow({ action, side, animatedStyle, progress, onPress }: SwipeActionRowProps) {
+export const SwipeActionRow = React.memo(function SwipeActionRow({ action, side, animatedStyle, progress, onPress }: SwipeActionRowProps) {
   const { theme } = useTheme();
   const c = theme.color;
 
@@ -48,7 +58,7 @@ export function SwipeActionRow({ action, side, animatedStyle, progress, onPress 
 
   const icon = ACTION_ICONS[action];
   const label = ACTION_LABELS[action];
-  const color = action === 'delete' ? c.error : c.primary;
+  const color = getActionColor(action, c);
 
   const handlePress = () => {
     hapticLight();
@@ -56,18 +66,16 @@ export function SwipeActionRow({ action, side, animatedStyle, progress, onPress 
   };
 
   const radiusStyle = useAnimatedStyle(() => {
-    const p = progress.value;
+    // Keep inner corners always rounded at RADIUS.lg
     if (side === 'left') {
-      // Left side: left corners stay rounded, right corners sharpen as action reveals
       return {
-        borderTopRightRadius: interpolate(p, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
-        borderBottomRightRadius: interpolate(p, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
+        borderTopRightRadius: RADIUS.lg,
+        borderBottomRightRadius: RADIUS.lg,
       };
     } else {
-      // Right side: right corners stay rounded, left corners sharpen as action reveals
       return {
-        borderTopLeftRadius: interpolate(p, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
-        borderBottomLeftRadius: interpolate(p, [0, 1], [RADIUS.lg, 0], Extrapolation.CLAMP),
+        borderTopLeftRadius: RADIUS.lg,
+        borderBottomLeftRadius: RADIUS.lg,
       };
     }
   });
@@ -96,7 +104,7 @@ export function SwipeActionRow({ action, side, animatedStyle, progress, onPress 
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -108,8 +116,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
-    flex: 1,
-    width: '100%',
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.xs,

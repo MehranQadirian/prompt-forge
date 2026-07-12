@@ -1,0 +1,45 @@
+# Changelog
+
+## v1.1.0
+### Added
+- In-app APK download with real-time progress display
+- GitHub release notes display in About page
+- "My Templates" toggle to filter user-created templates
+- Color-coded swipe action buttons (edit=blue, pin=amber, favorite=gold, delete=red)
+- Theme-aware System badge with shield icon on template cards
+- Markdown rendering in template card previews
+- Expand/collapse functionality for prompt and template previews
+- Debounced storage operations for better performance
+- Retry button for failed downloads
+- Browser download option as fallback
+
+### Improved
+- Component memoization for faster list scrolling
+- FlatList optimization with windowSize and maxToRenderPerBatch
+- Animation spring configurations for snappier responses
+- Bottom sheet open/close animations (80ms faster)
+- Search bar expand animation (75ms faster)
+- List bottom padding to prevent content overlap with FAB
+
+### Fixed
+- System tag theme consistency across all themes
+- Template card preview matching prompt card style
+- Last prompt card visibility above Create Prompt button
+- Color change not updating in real-time on prompt cards
+
+## v1.0.0
+### Features
+- Core prompt management (create, edit, delete, duplicate)
+- 14 theme variants (7 dark, 7 light)
+- Template library with 30+ system templates
+- AI-powered prompt enhancement (Groq, OpenAI, DeepSeek, Gemini, Claude)
+- Swipe actions for quick editing (configurable left/right)
+- Version history tracking for prompts
+- Category management with drag-to-reorder
+- Color coding for prompts
+- Pin and favorite functionality
+- RTL language support
+- Search and filter by category
+- Share prompts
+- Token counting
+- Customizable font size

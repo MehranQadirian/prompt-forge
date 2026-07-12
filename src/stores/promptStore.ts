@@ -7,6 +7,17 @@ function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
 }
 
+// Debounced save utility
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+const SAVE_DEBOUNCE_MS = 500;
+
+function debounceSave(saveFn: () => Promise<void>) {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveFn();
+  }, SAVE_DEBOUNCE_MS);
+}
+
 interface PromptState {
   prompts: Prompt[];
   customCategories: string[];
@@ -18,6 +29,7 @@ interface PromptState {
 
   loadPrompts: () => Promise<void>;
   savePrompts: () => Promise<void>;
+  debouncedSave: () => void;
   addPrompt: (title?: string, content?: string, category?: string) => string;
   updatePrompt: (id: string, updates: Partial<Prompt>) => void;
   deletePrompt: (id: string) => void;
@@ -78,6 +90,11 @@ export const usePromptStore = create<PromptState>((set, get) => ({
     }
   },
 
+  // Debounced version - calls actual save after delay
+  debouncedSave: () => {
+    debounceSave(get().savePrompts);
+  },
+
   addPrompt: (title = 'Untitled', content = '', category = 'Other') => {
     const id = generateId();
     const now = new Date().toISOString();
@@ -96,7 +113,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       order: get().prompts.length,
     };
     set((state) => ({ prompts: [newPrompt, ...state.prompts] }));
-    get().savePrompts();
+    get().debouncedSave();
     return id;
   },
 
@@ -108,7 +125,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
           : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   deletePrompt: (id) => {
@@ -116,7 +133,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       prompts: state.prompts.filter((p) => p.id !== id),
       selectedPromptId: state.selectedPromptId === id ? null : state.selectedPromptId,
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   duplicatePrompt: (id) => {
@@ -136,7 +153,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
     set((state) => ({
       prompts: [duplicate, ...state.prompts],
     }));
-    get().savePrompts();
+    get().debouncedSave();
     return newId;
   },
 
@@ -152,7 +169,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
     const { customCategories } = get();
     if (customCategories.includes(trimmed)) return;
     set({ customCategories: [...customCategories, trimmed] });
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   renameCustomCategory: (oldName, newName) => {
@@ -165,13 +182,13 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         p.category === oldName ? { ...p, category: trimmed } : p
       ),
     });
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   deleteCustomCategory: (name) => {
     const { customCategories } = get();
     set({ customCategories: customCategories.filter((c) => c !== name) });
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   deleteCategoryAndPrompts: (name) => {
@@ -181,7 +198,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       customCategories: customCategories.filter((c) => c !== name),
       categoryOrder: categoryOrder.filter((c) => c !== name),
     });
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   reassignCategory: (from, to) => {
@@ -194,12 +211,12 @@ export const usePromptStore = create<PromptState>((set, get) => ({
     if (customCategories.includes(from)) {
       set({ customCategories: customCategories.filter((c) => c !== from) });
     }
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   setCategoryOrder: (order) => {
     set({ categoryOrder: order });
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   hasCategory: (name) => {
@@ -214,7 +231,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   togglePin: (id) => {
@@ -223,7 +240,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         p.id === id ? { ...p, isPinned: !p.isPinned } : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   updatePromptColor: (id, color) => {
@@ -232,7 +249,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         p.id === id ? { ...p, color, updatedAt: new Date().toISOString() } : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   mapPromptColorsForTheme: (mapFn) => {
@@ -242,7 +259,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
         color: mapFn(p.color),
       })),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   addVersion: (id) => {
@@ -263,7 +280,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
           : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   restoreVersion: (id, versionId) => {
@@ -284,7 +301,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
           : p
       ),
     }));
-    get().savePrompts();
+    get().debouncedSave();
   },
 
   getFilteredPrompts: () => {

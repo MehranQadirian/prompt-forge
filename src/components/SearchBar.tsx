@@ -21,7 +21,7 @@ interface SearchBarProps {
   onToggle: () => void;
 }
 
-export function SearchBar({ title, query, onQueryChange, placeholder, isVisible, onToggle }: SearchBarProps) {
+export const SearchBar = React.memo(function SearchBar({ title, query, onQueryChange, placeholder, isVisible, onToggle }: SearchBarProps) {
   const { theme } = useTheme();
   const c = theme.color;
   const inputRef = useRef<TextInput>(null);
@@ -29,13 +29,13 @@ export function SearchBar({ title, query, onQueryChange, placeholder, isVisible,
 
   useEffect(() => {
     expandProgress.value = withTiming(isVisible ? 1 : 0, {
-      duration: 225,
+      duration: 150,
     });
   }, [isVisible]);
 
   useEffect(() => {
     if (isVisible) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 250);
+      const timer = setTimeout(() => inputRef.current?.focus(), 180);
       return () => clearTimeout(timer);
     } else {
       Keyboard.dismiss();
@@ -102,7 +102,7 @@ export function SearchBar({ title, query, onQueryChange, placeholder, isVisible,
       </Animated.View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrapper: {

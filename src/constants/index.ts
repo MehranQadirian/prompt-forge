@@ -1,6 +1,7 @@
 export const STORAGE_KEYS = {
   PROMPTS: '@promptforge_prompts',
   SETTINGS: '@promptforge_settings',
+  USER_TEMPLATES: '@promptforge_user_templates',
 } as const;
 
 export const SPACING = {
@@ -43,6 +44,15 @@ export const ICON_SIZE = { sm: 16, md: 20, lg: 24, xl: 32, list: 20, appbar: 24 
 export const TOUCH_TARGET = 48;
 
 export const FAVORITE_COLOR = '#FFD700';
+
+// Semantic colors for swipe actions (HCI color coding)
+export const ACTION_COLORS: Record<string, string> = {
+  edit: '#5EA8E0',      // info blue - modification action
+  duplicate: 'primary', // uses theme primary - creation action
+  pin: '#F2C94C',       // warning amber - importance/highlight
+  favorite: FAVORITE_COLOR, // gold - already defined
+  delete: 'error',      // uses theme error - destructive action
+};
 
 export const DEFAULT_CATEGORIES = [
   { id: 'cat-writing', name: 'Writing', color: '#7FBF8B' },

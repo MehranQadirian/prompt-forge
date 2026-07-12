@@ -179,10 +179,11 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
 
 // This component is used as children of BottomSheet via BottomSheetContext
 // The footer is passed separately via the footer prop pattern
-PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, onEdit }: {
+PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, onEdit, onShare }: {
   prompt: Prompt;
   onDelete: (p: Prompt) => void;
   onEdit: (p: Prompt) => void;
+  onShare?: (p: Prompt) => void;
 }) {
   const { theme } = useTheme();
   const c = theme.color;
@@ -199,6 +200,18 @@ PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, o
         <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
         <Text style={[styles.dangerText, { color: c.error }]}>Delete</Text>
       </Pressable>
+      {onShare && (
+        <Pressable
+          onPress={() => { hapticLight(); onShare(prompt); }}
+          accessibilityRole="button"
+          accessibilityLabel="Share prompt"
+          android_ripple={{ color: c.primary + '14' }}
+          style={({ pressed }) => [styles.secondaryBtn, { borderColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Ionicons name="share-outline" size={ICON_SIZE.sm} color={c.primary} />
+          <Text style={[styles.secondaryText, { color: c.primary }]}>Share</Text>
+        </Pressable>
+      )}
       <Pressable
         onPress={() => { hapticMedium(); onEdit(prompt); }}
         accessibilityRole="button"
@@ -302,6 +315,20 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   primaryText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  secondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: TOUCH_TARGET,
+    borderRadius: RADIUS.md,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderWidth: 1,
+  },
+  secondaryText: {
     fontSize: 14,
     fontWeight: '600',
   },

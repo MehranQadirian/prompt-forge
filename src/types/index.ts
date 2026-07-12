@@ -27,6 +27,7 @@ export interface PromptTemplate {
   category: string;
   tags: string[];
   description: string;
+  isSystem?: boolean;
 }
 
 export type ThemeMode = 'light' | 'dark';

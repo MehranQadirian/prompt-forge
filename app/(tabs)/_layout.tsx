@@ -31,7 +31,7 @@ function CreatePromptFAB({ onPress, bottom }: { onPress: () => void; bottom: num
   const scale = useSharedValue(1);
 
   const handlePressIn = useCallback(() => {
-    scale.value = withTiming(0.9, { duration: 80 });
+    scale.value = withTiming(0.9, { duration: 8 });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, []);
 
@@ -153,10 +153,10 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    right: SPACING.xl,
+    right: SPACING.xl - 4,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 9999,

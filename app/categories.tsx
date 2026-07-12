@@ -10,6 +10,7 @@ import {
   BackHandler,
   ScrollView,
 } from 'react-native';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Prompt } from '../src/types';
@@ -244,7 +245,6 @@ export default function CategoriesScreen() {
             style={({ pressed }) => [styles.iconBtn, { backgroundColor: c.primary + '18', opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Confirm edit"
-            android_ripple={{ color: c.onBackground + '14' }}
           >
             <Ionicons name="checkmark" size={20} color={c.primary} />
           </Pressable>
@@ -271,7 +271,7 @@ export default function CategoriesScreen() {
                   style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${item.name}`}
-                  android_ripple={{ color: c.onBackground + '14' }}
+                  android_ripple={{ color: c.onBackground + '14',radius:20 }}
                 >
                   <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
                 </Pressable>
@@ -280,7 +280,7 @@ export default function CategoriesScreen() {
                   style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${item.name}`}
-                  android_ripple={{ color: c.error + '14' }}
+                  android_ripple={{ color: c.error + '14' ,radius:20}}
                 >
                   <Ionicons name="trash" size={ICON_SIZE.sm} color={c.error} />
                 </Pressable>
@@ -455,7 +455,7 @@ export default function CategoriesScreen() {
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: c.onBackground + '14', borderless: true }}
+          android_ripple={{ color: c.onBackground + '14', borderless: true,radius:20 }}
         >
           <Ionicons name="chevron-back" size={24} color={c.onBackground} />
         </Pressable>
@@ -465,17 +465,21 @@ export default function CategoriesScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setIsCreating(true);
           }}
-          style={({ pressed }) => [styles.addBtn, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.addBtn]}
           accessibilityRole="button"
           accessibilityLabel="Add new category"
-          android_ripple={{ color: c.onBackground + '14', borderless: true }}
+          android_ripple={{ color: c.onBackground + '14', borderless: true,radius:20 }}
         >
           <Ionicons name="add-circle-outline" size={24} color={c.primary} />
         </Pressable>
       </View>
 
       {isCreating && (
-        <View style={[styles.createRow, { backgroundColor: c.surfaceContainer, borderColor: c.primary }]}>
+        <Animated.View
+          style={[styles.createRow, { backgroundColor: c.surfaceContainer, borderColor: c.primary }]}
+          entering={FadeInDown.duration(200)}
+          exiting={FadeOutUp.duration(150)}
+        >
           <TextInput
             ref={inputRef}
             style={[styles.createInput, { color: c.onBackground }]}
@@ -504,7 +508,7 @@ export default function CategoriesScreen() {
           >
             <Ionicons name="close" size={20} color={c.onSurfaceVariant} />
           </Pressable>
-        </View>
+        </Animated.View>
       )}
 
       <FlatList

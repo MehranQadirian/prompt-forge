@@ -91,8 +91,7 @@ function PillTabItem({
       accessibilityLabel={tab.badge ? `${tab.label}, ${tab.badge} unread` : tab.label}
       accessibilityHint={`Switch to ${tab.label} tab`}
       accessibilityState={{ selected: isActive }}
-      android_ripple={{ color: c.onBackground + '14' }}
-      style={[styles.tabItem, { width: tabWidth, borderRadius: RADIUS.full }, pressStyle]}
+      style={[styles.tabItem, { width: tabWidth, borderRadius: RADIUS.md }]}
     >
       <Animated.View style={[styles.iconWrap, iconStyle]}>
         <Ionicons
@@ -193,7 +192,7 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.xl,
     padding: SPACING.sm,
     position: 'relative',
     borderWidth: 1,
@@ -202,7 +201,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: SPACING.sm,
     bottom: SPACING.sm,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.md,
   },
   tabItem: {
     alignItems: 'center',

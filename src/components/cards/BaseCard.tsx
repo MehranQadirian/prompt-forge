@@ -12,7 +12,7 @@ interface BaseCardProps {
   style?: ViewStyle;
 }
 
-export function BaseCard({
+export const BaseCard = React.memo(function BaseCard({
   children,
   onPress,
   onLongPress,
@@ -49,7 +49,7 @@ export function BaseCard({
       {children}
     </Pressable>
   );
-}
+});
 
 const styles = {
   card: {
