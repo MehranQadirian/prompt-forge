@@ -1,15 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Linking, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/useTheme';
 import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
 
+const GITHUB_AVATAR_URL = 'https://github.com/MehranQadirian.png';
+
 export default function DeveloperScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const c = theme.color;
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Try to fetch GitHub avatar
+    fetch(GITHUB_AVATAR_URL, { method: 'HEAD', redirect: 'follow' })
+      .then((response) => {
+        if (response.ok) {
+          setAvatarUri(GITHUB_AVATAR_URL);
+        }
+      })
+      .catch(() => {
+        // No internet or error — keep avatarUri null, show fallback
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
@@ -34,9 +54,20 @@ export default function DeveloperScreen() {
         {/* Developer Profile Card */}
         <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { backgroundColor: c.primary + '18' }]}>
-              <Text style={[styles.avatarText, { color: c.primary }]}>MG</Text>
-            </View>
+            {avatarUri ? (
+              <Image
+                source={{ uri: avatarUri }}
+                style={[styles.avatar, { backgroundColor: c.primary + '18' }]}
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: c.primary + '18' }]}>
+                {loading ? (
+                  <ActivityIndicator size="small" color={c.primary} />
+                ) : (
+                  <Text style={[styles.avatarText, { color: c.primary }]}>MG</Text>
+                )}
+              </View>
+            )}
           </View>
           
           <Text style={[styles.developerName, { color: c.onBackground }]}>Mehran Ghadirian</Text>
@@ -140,6 +171,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 32,
