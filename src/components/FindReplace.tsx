@@ -96,7 +96,6 @@ export function FindReplace({
             onPress={handleReplace}
             accessibilityRole="button"
             accessibilityLabel="Replace one"
-            android_ripple={{ color: c.onBackground + '14' }}
             style={({ pressed }) => [styles.replaceBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={[styles.replaceBtnText, { color: c.primary }]}>Replace</Text>
@@ -105,7 +104,6 @@ export function FindReplace({
             onPress={handleReplaceAll}
             accessibilityRole="button"
             accessibilityLabel="Replace all"
-            android_ripple={{ color: c.onBackground + '14' }}
             style={({ pressed }) => [styles.replaceBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={[styles.replaceBtnText, { color: c.primary }]}>All</Text>
@@ -122,7 +120,6 @@ function IconBtn({ icon, label, color, onPress }: { icon: string; label: string;
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      android_ripple={{ color: color + '14', borderless: true }}
       hitSlop={8}
       style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
     >

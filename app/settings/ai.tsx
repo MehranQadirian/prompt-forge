@@ -71,7 +71,6 @@ function ProviderRow({
         accessibilityRole="radio"
         accessibilityLabel={`${config.name} provider`}
         accessibilityState={{ selected: isActive }}
-        android_ripple={{ color: c.onBackground + '14' }}
         style={({ pressed }) => [
           styles.providerOption,
           {
@@ -104,7 +103,6 @@ function ProviderRow({
                 disabled={config.status === 'validating'}
                 accessibilityRole="button"
                 accessibilityLabel="Test API key"
-                android_ripple={{ color: c.primary + '14' }}
                 style={({ pressed }) => [
                   styles.providerActionBtn,
                   { borderColor: c.primary, opacity: pressed || config.status === 'validating' ? 0.7 : 1 },
@@ -119,7 +117,6 @@ function ProviderRow({
                 onPress={onRemoveApiKey}
                 accessibilityRole="button"
                 accessibilityLabel="Remove API key"
-                android_ripple={{ color: c.error + '14' }}
                 style={({ pressed }) => [
                   styles.providerActionBtn,
                   { borderColor: c.error, opacity: pressed ? 0.7 : 1 },
@@ -154,7 +151,6 @@ function ProviderRow({
                     disabled={!keyValue.trim()}
                     accessibilityRole="button"
                     accessibilityLabel="Save API key"
-                    android_ripple={{ color: c.primary + '14' }}
                     style={({ pressed }) => [
                       styles.keySaveBtn,
                       {
@@ -172,7 +168,6 @@ function ProviderRow({
                     }}
                     accessibilityRole="button"
                     accessibilityLabel="Cancel"
-                    android_ripple={{ color: c.onBackground + '14' }}
                     style={({ pressed }) => [styles.keyCancelBtn, { opacity: pressed ? 0.7 : 1 }]}
                   >
                     <Ionicons name="close" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
@@ -183,7 +178,6 @@ function ProviderRow({
                   onPress={() => setShowKeyInput(true)}
                   accessibilityRole="button"
                   accessibilityLabel={`Add ${config.name} API key`}
-                  android_ripple={{ color: c.primary + '14' }}
                   style={({ pressed }) => [
                     styles.providerActionBtn,
                     { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
@@ -252,11 +246,10 @@ export default function AISettingsScreen() {
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: theme.color.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.onBackground + '0D' : theme.color.surfaceContainer },
+            { backgroundColor: pressed ? theme.color.surfaceContainerHigh : theme.color.surfaceContainer },
           ]}
         >
           <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
@@ -328,7 +321,6 @@ export default function AISettingsScreen() {
                 disabled={!systemPromptDirty}
                 accessibilityRole="button"
                 accessibilityLabel="Reset to default"
-                android_ripple={{ color: theme.color.onBackground + '14' }}
                 style={({ pressed }) => [
                   styles.resetBtn,
                   { borderColor: theme.color.outlineVariant, opacity: pressed || !systemPromptDirty ? 0.7 : 1 },
@@ -342,7 +334,6 @@ export default function AISettingsScreen() {
                 disabled={!systemPromptDirty}
                 accessibilityRole="button"
                 accessibilityLabel="Save system prompt"
-                android_ripple={{ color: theme.color.onPrimary + '30' }}
                 style={({ pressed }) => [
                   styles.savePromptBtn,
                   {

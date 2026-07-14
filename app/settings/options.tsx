@@ -42,7 +42,6 @@ export default function OptionsScreen() {
             accessibilityRole="radio"
             accessibilityLabel={opt.label}
             accessibilityState={{ selected: currentValue === opt.value }}
-            android_ripple={{ color: c.primary + '14' }}
             style={({ pressed }) => [
               styles.pickerOption,
               {
@@ -78,11 +77,10 @@ export default function OptionsScreen() {
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: c.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
+            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
           ]}
         >
           <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />

@@ -63,11 +63,10 @@ export const SearchBar = React.memo(function SearchBar({ title, query, onQueryCh
           onPress={handleToggle}
           accessibilityRole="button"
           accessibilityLabel={isVisible ? 'Close search' : 'Open search'}
-          android_ripple={{ color: c.onBackground + '14' }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.iconBtn,
-            { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
+            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
           ]}
         >
           <Ionicons name={isVisible ? 'close' : 'search'} size={ICON_SIZE.md} color={c.onSurfaceVariant} />
@@ -92,7 +91,6 @@ export const SearchBar = React.memo(function SearchBar({ title, query, onQueryCh
               onPress={() => onQueryChange('')}
               accessibilityRole="button"
               accessibilityLabel="Clear search"
-              android_ripple={{ color: c.onBackground + '14', borderless: true }}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             >
               <Ionicons name="close-circle" size={ICON_SIZE.md} color={c.disabled} />

@@ -58,7 +58,6 @@ export function ColorGridSheet({ visible, currentColor, onClose, onSelect }: Col
               accessibilityRole="radio"
               accessibilityLabel={`Color ${color}`}
               accessibilityState={{ selected: isSelected }}
-              android_ripple={{ color: c.onBackground + '14' }}
               style={({ pressed }) => [styles.colorOption, { opacity: pressed ? 0.7 : 1 }]}
             >
               <View

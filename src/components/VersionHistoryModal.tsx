@@ -78,7 +78,6 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
                 onPress={() => setSelectedId(isSelected ? null : v.id)}
                 accessibilityRole="button"
                 accessibilityLabel={`Version from ${date.toLocaleString()}`}
-                android_ripple={{ color: c.onBackground + '14' }}
                 style={({ pressed }) => [
                   styles.versionItem,
                   {
@@ -116,7 +115,6 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
                     onPress={() => handleRestore(v)}
                     accessibilityRole="button"
                     accessibilityLabel="Restore this version"
-                    android_ripple={{ color: c.primary + '14' }}
                     style={({ pressed }) => [styles.restoreBtn, { borderColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
                   >
                     <Ionicons name="arrow-undo" size={ICON_SIZE.sm} color={c.primary} />
@@ -126,7 +124,6 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
                     onPress={() => handleDelete(v)}
                     accessibilityRole="button"
                     accessibilityLabel="Delete this version"
-                    android_ripple={{ color: c.error + '14' }}
                     style={({ pressed }) => [styles.deleteBtn, { borderColor: c.error, opacity: pressed ? 0.7 : 1 }]}
                   >
                     <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
@@ -162,7 +159,6 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
             style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Cancel"
-            android_ripple={{ color: c.onBackground + '14' }}
           >
             <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
           </Pressable>
@@ -175,7 +171,6 @@ export function VersionHistoryModal({ visible, versions, onClose, onRestore, onD
             style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Delete"
-            android_ripple={{ color: c.onError + '30' }}
           >
             <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
           </Pressable>

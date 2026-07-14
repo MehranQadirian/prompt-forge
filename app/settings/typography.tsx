@@ -33,11 +33,10 @@ export default function TypographyScreen() {
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: theme.color.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.onBackground + '0D' : theme.color.surfaceContainer },
+            { backgroundColor: pressed ? theme.color.surfaceContainerHigh : theme.color.surfaceContainer },
           ]}
         >
           <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
@@ -59,7 +58,6 @@ export default function TypographyScreen() {
               accessibilityRole="radio"
               accessibilityLabel={`${option.label} font size`}
               accessibilityState={{ selected: settings.fontSize === option.value }}
-              android_ripple={{ color: theme.color.onBackground + '14' }}
               style={({ pressed }) => [
                 styles.option,
                 {
@@ -87,7 +85,6 @@ export default function TypographyScreen() {
               accessibilityRole="radio"
               accessibilityLabel={`${option.label} font family`}
               accessibilityState={{ selected: settings.fontFamily === option.value }}
-              android_ripple={{ color: theme.color.onBackground + '14' }}
               style={({ pressed }) => [
                 styles.option,
                 {

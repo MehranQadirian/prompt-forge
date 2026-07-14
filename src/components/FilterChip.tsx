@@ -23,7 +23,6 @@ export function FilterChip({ label, isSelected, onPress }: FilterChipProps) {
       accessibilityRole="button"
       accessibilityLabel={`${label} category${isSelected ? ', selected' : ''}`}
       accessibilityState={{ selected: isSelected }}
-      android_ripple={{ color: c.onBackground + '14' }}
       hitSlop={8}
       style={({ pressed }) => [
         styles.chip,

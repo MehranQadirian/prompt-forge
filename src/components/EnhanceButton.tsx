@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/useTheme';
-import { ICON_SIZE } from '../constants';
+import { ICON_SIZE, RADIUS } from '../constants';
 
 const BTN_SIZE = 32;
 
@@ -21,12 +21,12 @@ export function EnhanceButton({ isEnhancing, onPress }: EnhanceButtonProps) {
       disabled={isEnhancing}
       accessibilityRole="button"
       accessibilityLabel={isEnhancing ? 'Enhancing prompt' : 'Enhance prompt'}
-      android_ripple={{ color: c.primary + '14', borderless: true }}
       hitSlop={8}
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: pressed ? c.primary + '0D' : c.surfaceContainer,
+          backgroundColor: pressed ? c.surfaceContainerHigh : isEnhancing ? c.primary + '18' : c.surfaceContainer,
+          opacity: pressed ? 0.7 : 1,
         },
       ]}
     >
@@ -45,5 +45,6 @@ const styles = StyleSheet.create({
     height: BTN_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: RADIUS.sm,
   },
 });

@@ -41,3 +41,6 @@ yarn-error.*
 
 # generated native folders
 /ios
+
+# Project overview (internal documentation)
+PROJECT_OVERVIEW.md

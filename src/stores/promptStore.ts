@@ -104,7 +104,7 @@ export const usePromptStore = create<PromptState>((set, get) => ({
       content,
       category,
       tags: [],
-      color: '#7fbf8b',
+      color: '#4ADE80',
       isFavorite: false,
       isPinned: false,
       createdAt: now,

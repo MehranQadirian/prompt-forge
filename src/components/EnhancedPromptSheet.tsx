@@ -7,6 +7,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useTheme } from '../theme/useTheme';
 import { SPACING, RADIUS, TOUCH_TARGET, ICON_SIZE, TYPOGRAPHY } from '../constants';
 import { hapticLight, hapticMedium } from '../constants/haptics';
@@ -17,6 +18,7 @@ interface EnhancedPromptSheetProps {
   visible: boolean;
   enhancedText: string | null;
   error: AIError | null;
+  isLoading?: boolean;
   onClose: () => void;
   onReplace: () => void;
   onInsertBelow: () => void;
@@ -28,6 +30,7 @@ export function EnhancedPromptSheet({
   visible,
   enhancedText,
   error,
+  isLoading = false,
   onClose,
   onReplace,
   onInsertBelow,
@@ -38,11 +41,31 @@ export function EnhancedPromptSheet({
   const c = theme.color;
   const sheetRef = useRef<BottomSheetRef>(null);
 
+  // Skeleton animation
+  const skeletonOpacity = useSharedValue(0.3);
+
   useEffect(() => {
     if (visible) {
       sheetRef.current?.present();
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (isLoading) {
+      skeletonOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 800 }),
+          withTiming(0.3, { duration: 800 })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [isLoading]);
+
+  const skeletonStyle = useAnimatedStyle(() => ({
+    opacity: skeletonOpacity.value,
+  }));
 
   const handleReplace = () => {
     hapticMedium();
@@ -73,7 +96,6 @@ export function EnhancedPromptSheet({
         onPress={handleReplace}
         accessibilityRole="button"
         accessibilityLabel="Replace current text"
-        android_ripple={{ color: c.onPrimary + '30' }}
         style={({ pressed }) => [
           styles.primaryBtn,
           { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
@@ -89,7 +111,6 @@ export function EnhancedPromptSheet({
         onPress={handleInsertBelow}
         accessibilityRole="button"
         accessibilityLabel="Insert below current text"
-        android_ripple={{ color: c.primary + '14' }}
         style={({ pressed }) => [
           styles.secondaryBtn,
           { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
@@ -105,7 +126,6 @@ export function EnhancedPromptSheet({
         onPress={handleCopy}
         accessibilityRole="button"
         accessibilityLabel="Copy to clipboard"
-        android_ripple={{ color: c.primary + '14' }}
         style={({ pressed }) => [
           styles.secondaryBtn,
           { borderColor: c.primary, opacity: pressed ? 0.7 : 1 },
@@ -119,7 +139,6 @@ export function EnhancedPromptSheet({
         onPress={handleClose}
         accessibilityRole="button"
         accessibilityLabel="Dismiss"
-        android_ripple={{ color: c.onBackground + '14' }}
         style={({ pressed }) => [
           styles.tertiaryBtn,
           { opacity: pressed ? 0.7 : 1 },
@@ -139,7 +158,6 @@ export function EnhancedPromptSheet({
       }}
       accessibilityRole="button"
       accessibilityLabel="Open AI Settings"
-      android_ripple={{ color: c.primary + '30' }}
       style={({ pressed }) => [
         styles.primaryBtn,
         { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
@@ -180,7 +198,7 @@ export function EnhancedPromptSheet({
         </View>
       </View>
 
-      {/* Error message or preview */}
+      {/* Error message, loading skeleton, or preview */}
       {error ? (
         <>
           <View style={[styles.errorContainer, { backgroundColor: c.error + '0D', borderColor: c.error + '30' }]}>
@@ -188,6 +206,18 @@ export function EnhancedPromptSheet({
             <Text style={[styles.errorText, { color: c.error }]}>{error.message}</Text>
           </View>
         </>
+      ) : isLoading ? (
+        <View style={[styles.previewContainer, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
+          <View style={styles.skeletonHeader}>
+            <Ionicons name="sparkles" size={ICON_SIZE.sm} color={c.primary} />
+            <Text style={[styles.skeletonTitle, { color: c.onBackground }]}>Enhancing your prompt...</Text>
+          </View>
+          <Animated.View style={[styles.skeletonLine, { backgroundColor: c.outlineVariant }, skeletonStyle]} />
+          <Animated.View style={[styles.skeletonLine, { backgroundColor: c.outlineVariant, width: '80%' }, skeletonStyle]} />
+          <Animated.View style={[styles.skeletonLine, { backgroundColor: c.outlineVariant, width: '60%' }, skeletonStyle]} />
+          <Animated.View style={[styles.skeletonLine, { backgroundColor: c.outlineVariant, width: '90%' }, skeletonStyle]} />
+          <Animated.View style={[styles.skeletonLine, { backgroundColor: c.outlineVariant, width: '40%' }, skeletonStyle]} />
+        </View>
       ) : (
         <ScrollView
           style={[styles.previewContainer, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}
@@ -261,6 +291,21 @@ const styles = StyleSheet.create({
   previewText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  skeletonTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: RADIUS.xs,
+    marginBottom: SPACING.sm,
   },
   actions: {
     gap: SPACING.sm,

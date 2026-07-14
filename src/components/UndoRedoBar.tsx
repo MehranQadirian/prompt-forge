@@ -25,13 +25,12 @@ export function UndoRedoBar({ canUndo, canRedo, onUndo, onRedo }: UndoRedoBarPro
         accessibilityRole="button"
         accessibilityLabel="Undo"
         accessibilityState={{ disabled: !canUndo }}
-        android_ripple={{ color: c.onBackground + '14' }}
         hitSlop={8}
         style={({ pressed }) => [
           styles.btn,
           {
             opacity: pressed ? 0.7 : (canUndo ? 1 : 0.38),
-            backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer,
+            backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer,
           },
         ]}
       >
@@ -43,13 +42,12 @@ export function UndoRedoBar({ canUndo, canRedo, onUndo, onRedo }: UndoRedoBarPro
         accessibilityRole="button"
         accessibilityLabel="Redo"
         accessibilityState={{ disabled: !canRedo }}
-        android_ripple={{ color: c.onBackground + '14' }}
         hitSlop={8}
         style={({ pressed }) => [
           styles.btn,
           {
             opacity: pressed ? 0.7 : (canRedo ? 1 : 0.38),
-            backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer,
+            backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer,
           },
         ]}
       >

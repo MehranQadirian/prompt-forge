@@ -118,7 +118,6 @@ export function ShareSheet({ visible, promptTitle, promptContent, onClose }: Sha
           onPress={option.onPress}
           accessibilityRole="button"
           accessibilityLabel={option.label}
-          android_ripple={{ color: (option.color || c.primary) + '14' }}
           hitSlop={8}
           style={({ pressed }) => [styles.option, { opacity: pressed ? 0.7 : 1 }]}
         >

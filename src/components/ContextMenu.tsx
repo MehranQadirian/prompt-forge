@@ -171,7 +171,6 @@ export function ContextMenu({
               onPress={() => confirmSheetRef.current?.dismiss()}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
-              android_ripple={{ color: c.onBackground + '14' }}
               style={({ pressed }) => [styles.cancelBtn, { borderColor: c.outline, opacity: pressed ? 0.7 : 1 }]}
             >
               <Text style={[styles.cancelText, { color: c.onSurfaceVariant }]}>Cancel</Text>
@@ -180,7 +179,6 @@ export function ContextMenu({
               onPress={confirmDelete}
               accessibilityRole="button"
               accessibilityLabel="Confirm delete"
-              android_ripple={{ color: c.error + '30' }}
               style={({ pressed }) => [styles.deleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
             >
               <Ionicons name="trash" size={ICON_SIZE.sm} color={c.onError} />
@@ -199,7 +197,6 @@ function MenuItem({ icon, label, color, onPress }: { icon: string; label: string
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      android_ripple={{ color: color + '14' }}
       hitSlop={8}
       style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.7 : 1 }]}
     >

@@ -141,7 +141,6 @@ export function PlaceholderBar({ text, onTextChange, promptId }: PlaceholderBarP
               onPress={() => handlePlaceholderPress(ph)}
               accessibilityRole="button"
               accessibilityLabel={`${displayLabel}${hasValue ? ', filled' : ''}, tap to edit`}
-              android_ripple={{ color: c.primary + '14' }}
               style={({ pressed }) => [
                 styles.placeholderBtn,
                 {

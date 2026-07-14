@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable, ScrollView, BackHandler, useWindowDimensio
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   withSpring,
   withTiming,
   runOnJS,
@@ -42,6 +43,7 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
     const translateY = useSharedValue(screenHeight);
     const backdropOpacity = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
+    const scrollOffsetY = useSharedValue(0);
     const reduceMotion = useSharedValue(false);
 
     const [isOpen, setIsOpen] = useState(false);
@@ -113,16 +115,22 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
       dismiss: dismissSheet,
     }));
 
-    // Pan gesture — ONLY on the handle area
+    // Native scroll gesture — used simultaneously with the pan gesture
+    const scrollGesture = Gesture.Native();
+
+    // Pan gesture — simultaneous with scroll, only acts when scroll is at top
     const panGesture = Gesture.Pan()
-      .activeOffsetY([0, 5])
+      .activeOffsetY(5)
+      .simultaneousWithExternalGesture(scrollGesture)
       .onUpdate((event) => {
+        if (scrollOffsetY.value > 0) return;
         const newY = Math.max(0, event.translationY);
         translateY.value = newY;
         const progress = Math.min(newY / DISMISS_THRESHOLD, 1);
         backdropOpacity.value = 0.60 * (1 - progress);
       })
       .onEnd((event) => {
+        if (scrollOffsetY.value > 0) return;
         if (event.translationY > DISMISS_THRESHOLD || event.velocityY > VELOCITY_THRESHOLD) {
           runOnJS(dismissSheet)();
         } else {
@@ -131,6 +139,13 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           backdropOpacity.value = withTiming(0.60, { duration: BACKDROP_DURATION });
         }
       });
+
+    // Track ScrollView offset for gesture coordination
+    const scrollHandler = useAnimatedScrollHandler({
+      onScroll: (event) => {
+        scrollOffsetY.value = event.contentOffset.y;
+      },
+    });
 
     const backdropStyle = useAnimatedStyle(() => ({
       opacity: backdropOpacity.value,
@@ -159,45 +174,47 @@ export const BottomSheet = forwardRef<BottomSheetRef, BottomSheetProps>(
           />
           <Pressable style={styles.backdropTouch} onPress={dismissSheet} />
 
-          {/* Sheet */}
-          <Animated.View
-            style={[
-              styles.sheet,
-              {
-                backgroundColor: c.surfaceContainerHigh,
-                borderColor: c.outlineVariant,
-              },
-              sheetStyle,
-            ]}
-          >
-            {/* Handle area — gesture wrapped HERE only */}
-            <GestureDetector gesture={panGesture}>
+          {/* Sheet — pan gesture wraps entire sheet */}
+          <GestureDetector gesture={panGesture}>
+            <Animated.View
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: c.surfaceContainerHigh,
+                  borderColor: c.outlineVariant,
+                },
+                sheetStyle,
+              ]}
+            >
               <View style={styles.handleArea} accessibilityLabel="Drag to dismiss">
                 <View style={[styles.handle, { backgroundColor: c.outline }]} />
               </View>
-            </GestureDetector>
 
-            {/* Content — ScrollView handles its own touches */}
-            <Animated.View style={[contentStyle, styles.contentWrapper]}>
-              <ScrollView
-                style={styles.scrollContent}
-                contentContainerStyle={styles.scrollContentContainer}
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled
-                bounces={false}
-                scrollEventThrottle={16}
-              >
-                {children}
-              </ScrollView>
+              {/* Content — native scroll gesture wraps ScrollView */}
+              <Animated.View style={[contentStyle, styles.contentWrapper]}>
+                <GestureDetector gesture={scrollGesture}>
+                  <ScrollView
+                    style={styles.scrollContent}
+                    contentContainerStyle={styles.scrollContentContainer}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled
+                    bounces={false}
+                    scrollEventThrottle={16}
+                    onScroll={scrollHandler}
+                  >
+                    {children}
+                  </ScrollView>
+                </GestureDetector>
 
-              {/* Footer — pinned outside ScrollView */}
-              {footer && (
-                <View style={[styles.footer, { borderTopColor: c.outlineVariant }]}>
-                  {footer}
-                </View>
-              )}
+                {/* Footer — pinned outside ScrollView */}
+                {footer && (
+                  <View style={[styles.footer, { borderTopColor: c.outlineVariant }]}>
+                    {footer}
+                  </View>
+                )}
+              </Animated.View>
             </Animated.View>
-          </Animated.View>
+          </GestureDetector>
         </View>
       </Modal>
     );

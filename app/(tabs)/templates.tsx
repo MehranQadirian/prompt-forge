@@ -78,6 +78,11 @@ export default function TemplatesScreen() {
     return templates;
   }, [allTemplates, searchQuery, selectedCategory, showMyTemplates]);
 
+  const templateCategories = useMemo(() => {
+    const cats = new Set(allTemplates.map((t) => t.category));
+    return DEFAULT_CATEGORIES.filter((cat) => cats.has(cat.name));
+  }, [allTemplates]);
+
   useEffect(() => {
     if (categoryListRef.current && scrollXRef.current > 0) {
       categoryListRef.current.scrollToOffset({ offset: scrollXRef.current, animated: false });
@@ -87,11 +92,17 @@ export default function TemplatesScreen() {
   useFocusEffect(
     useCallback(() => {
       return () => {
+        // Reset ALL state when screen loses focus
         setSearchVisible(false);
         setSearchQuery('');
         setSelectedCategory(null);
+        setCategoryConfirmVisible(false);
+        setShowCategoryPicker(false);
+        setPendingTemplate(null);
+        setNewCatName('');
+        hideBottomSheet();
       };
-    }, [setSearchQuery])
+    }, [setSearchQuery, hideBottomSheet])
   );
 
   const handleUseTemplate = useCallback((template: PromptTemplate) => {
@@ -192,6 +203,19 @@ export default function TemplatesScreen() {
     />
   ), [handleCardPress, handleCardLongPress]);
 
+  const renderCategoryTag = useCallback(({ item }: { item: { id: string; name: string; color?: string } }) => (
+    <CategoryTag
+      name={item.name}
+      isSelected={item.id === 'all' ? !selectedCategory : selectedCategory === item.name}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setSelectedCategory(item.id === 'all' ? null : item.name);
+      }}
+    />
+  ), [selectedCategory]);
+
+  const categoryKeyExtractor = useCallback((item: { id: string }) => item.id, []);
+
   const renderHeader = useCallback(() => (
     <View>
       {/* Toggle for My Templates */}
@@ -213,21 +237,9 @@ export default function TemplatesScreen() {
       <FlatList
         ref={categoryListRef}
         horizontal
-        data={[{ id: 'all', name: 'All', color: c.primary }, ...DEFAULT_CATEGORIES.filter((cat) => {
-          const templateCats = new Set(allTemplates.map((t) => t.category));
-          return templateCats.has(cat.name);
-        })]}
-        renderItem={({ item }) => (
-          <CategoryTag
-            name={item.name}
-            isSelected={item.id === 'all' ? !selectedCategory : selectedCategory === item.name}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setSelectedCategory(item.id === 'all' ? null : item.name);
-            }}
-          />
-        )}
-        keyExtractor={(item) => item.id}
+        data={[{ id: 'all', name: 'All' }, ...templateCategories]}
+        renderItem={renderCategoryTag}
+        keyExtractor={categoryKeyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.catList}
         onScroll={(e) => { scrollXRef.current = e.nativeEvent.contentOffset.x; }}
@@ -240,7 +252,7 @@ export default function TemplatesScreen() {
         </Text>
       </View>
     </View>
-  ), [c, selectedCategory, allTemplates, filteredTemplates.length, showMyTemplates]);
+  ), [c, selectedCategory, templateCategories, renderCategoryTag, categoryKeyExtractor, filteredTemplates.length, showMyTemplates]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
@@ -267,6 +279,7 @@ export default function TemplatesScreen() {
         maxToRenderPerBatch={10}
         windowSize={5}
         initialNumToRender={8}
+        extraData={selectedCategory}
         ListEmptyComponent={
           <View style={styles.empty}>
             <View style={[styles.emptyIcon, { backgroundColor: c.primary + '18' }]}>
@@ -310,7 +323,6 @@ export default function TemplatesScreen() {
               <Pressable
                 onPress={handleConfirmCreateCategory}
                 style={({ pressed }) => [styles.modalBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
-                android_ripple={{ color: c.onPrimary + '30' }}
                 accessibilityRole="button"
                 accessibilityLabel="Create category"
               >
@@ -319,7 +331,6 @@ export default function TemplatesScreen() {
               <Pressable
                 onPress={handleChooseDifferentCategory}
                 style={({ pressed }) => [styles.modalBtn, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant, borderWidth: 1, opacity: pressed ? 0.7 : 1 }]}
-                android_ripple={{ color: c.onBackground + '14' }}
                 accessibilityRole="button"
                 accessibilityLabel="Choose different category"
               >
@@ -350,7 +361,6 @@ export default function TemplatesScreen() {
                         />
                         <Pressable
                           onPress={handleCreateNewCategory}
-                          android_ripple={{ color: c.onBackground + '14', borderless: true }}
                           hitSlop={4}
                           style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
                         >
@@ -365,7 +375,6 @@ export default function TemplatesScreen() {
                     <Pressable
                       onPress={() => handleSelectCategory('Other')}
                       style={({ pressed }) => [styles.catPickRow, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
-                      android_ripple={{ color: c.onBackground + '14' }}
                       accessibilityRole="button"
                       accessibilityLabel="Other category"
                     >
@@ -378,7 +387,6 @@ export default function TemplatesScreen() {
                   <Pressable
                     onPress={() => handleSelectCategory(item)}
                     style={({ pressed }) => [styles.catPickRow, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
-                    android_ripple={{ color: c.onBackground + '14' }}
                     accessibilityRole="button"
                     accessibilityLabel={item}
                   >

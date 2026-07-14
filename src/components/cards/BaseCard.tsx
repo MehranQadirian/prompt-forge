@@ -30,7 +30,6 @@ export const BaseCard = React.memo(function BaseCard({
       onLongPress={onLongPress}
       delayLongPress={300}
       disabled={disabled}
-      android_ripple={{ color: c.onBackground + '14' }}
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -38,9 +37,9 @@ export const BaseCard = React.memo(function BaseCard({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: pressed ? c.onBackground + '08' : c.surfaceContainer,
+          backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer,
           borderColor: c.outlineVariant,
-          opacity: pressed ? 0.98 : 1,
+          opacity: pressed ? 0.96 : 1,
         },
         disabled && styles.disabled,
         style,

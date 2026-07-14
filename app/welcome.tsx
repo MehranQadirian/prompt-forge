@@ -261,7 +261,6 @@ export default function WelcomeScreen() {
             onPress={handleSkip}
             accessibilityRole="button"
             accessibilityLabel="Skip onboarding"
-            android_ripple={{ color: c.onBackground + '14' }}
             hitSlop={8}
             style={({ pressed }) => [styles.skipBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
@@ -281,7 +280,6 @@ export default function WelcomeScreen() {
               ? 'Finish onboarding and go to app'
               : 'Go to next onboarding page'
           }
-          android_ripple={{ color: c.onBackground + '30' }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.nextBtn,

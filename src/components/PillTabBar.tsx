@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const SPRING = { damping: 20, stiffness: 250, mass: 0.8 };
+const SPRING = { damping: 30, stiffness: 400, mass: 0.8 };
 
 export interface Tab {
   key: string;
@@ -75,7 +75,7 @@ function PillTabItem({
 
   const pressStyle = useAnimatedStyle(() => ({
     opacity: pressedOpacity.value,
-    backgroundColor: pressedBg.value === 1 ? c.onBackground + '08' : 'transparent',
+    backgroundColor: pressedBg.value === 1 ? c.onBackground + '14' : 'transparent',
   }));
 
   return (

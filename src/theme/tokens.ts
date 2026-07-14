@@ -160,15 +160,26 @@ export const lightThemeVariants: ThemeVariant[] = [
   'paper', 'sky', 'sage', 'rose', 'latte', 'lavender', 'snow',
 ];
 
-// Prompt accent colors — 8 for dark themes, 8 for light themes
 export const PROMPT_COLORS_DARK = [
-  '#7FBF8B', '#5EA8E0', '#E08A7A', '#B88AD9',
-  '#E0907A', '#8BE9FD', '#F1FA8C', '#FF79C6',
+  '#4ADE80',
+  '#60A5FA',
+  '#A78BFA',
+  '#F472B6',
+  '#FB923C',
+  '#22D3EE',
+  '#FACC15',
+  '#F87171',
 ];
 
 export const PROMPT_COLORS_LIGHT = [
-  '#2D7A50', '#2563EB', '#C04040', '#7050C0',
-  '#8A4C26', '#1D6FA5', '#8B6914', '#C02050',
+  '#059669',
+  '#2563EB',
+  '#7C3AED',
+  '#DB2777',
+  '#EA580C',
+  '#0891B2',
+  '#CA8A04',
+  '#E11D48',
 ];
 
 // Legacy export for backward compatibility

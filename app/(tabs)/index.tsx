@@ -14,8 +14,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, interpolate, Extrapolation } from 'react-native-reanimated';
 import { usePromptStore } from '../../src/stores/promptStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useTheme } from '../../src/theme/useTheme';
@@ -71,7 +72,6 @@ const CategoryInput = React.memo(function CategoryInput({
         onPress={() => onConfirm(value)}
         accessibilityRole="button"
         accessibilityLabel="Confirm"
-        android_ripple={{ color: c.onBackground + '14', borderless: true }}
         hitSlop={4}
         style={styles.confirmBtn}
       >
@@ -143,6 +143,7 @@ export default function PromptsScreen() {
   const { showBottomSheet, hideBottomSheet } = useBottomSheet();
 
   const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [reorderMode, setReorderMode] = useState(false);
   const [colorGridVisible, setColorGridVisible] = useState(false);
   const [colorGridPrompt, setColorGridPrompt] = useState<Prompt | null>(null);
@@ -153,6 +154,9 @@ export default function PromptsScreen() {
   const [deleteConfirmPrompt, setDeleteConfirmPrompt] = useState<Prompt | null>(null);
   const deleteConfirmRef = useRef<BottomSheetRef>(null);
   const bulkDeleteConfirmRef = useRef<BottomSheetRef>(null);
+
+  // Animation for new category input
+  const newCategoryExpandProgress = useSharedValue(0);
 
   // Animation values for selection mode transitions
   const headerOpacity = useSharedValue(1);
@@ -174,6 +178,15 @@ export default function PromptsScreen() {
     }
   }, [selectionMode]);
 
+  // Animate new category input expand/collapse and auto-focus
+  useEffect(() => {
+    newCategoryExpandProgress.value = withTiming(showNewCategory ? 1 : 0, { duration: 150 });
+    if (showNewCategory) {
+      const timer = setTimeout(() => newCategoryInputRef.current?.focus(), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [showNewCategory]);
+
   const headerAnimStyle = useAnimatedStyle(() => ({
     opacity: headerOpacity.value,
     transform: [{ translateY: headerTranslateY.value }],
@@ -184,9 +197,15 @@ export default function PromptsScreen() {
     transform: [{ translateY: bulkTranslateY.value }],
   }));
 
+  const newCategoryStyle = useAnimatedStyle(() => ({
+    height: interpolate(newCategoryExpandProgress.value, [0, 1], [0, TOUCH_TARGET + SPACING.sm], Extrapolation.CLAMP),
+    opacity: interpolate(newCategoryExpandProgress.value, [0, 0.3], [0, 1], Extrapolation.CLAMP),
+  }));
+
   const categoryListRef = useRef<FlatList>(null);
   const scrollXRef = useRef(0);
   const categoryContextMenuSheetRef = useRef<BottomSheetRef>(null);
+  const newCategoryInputRef = useRef<TextInput>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -195,6 +214,7 @@ export default function PromptsScreen() {
         setSearchQuery('');
         setFilterCategory(null);
         setShowNewCategory(false);
+        setNewCategoryName('');
       };
     }, [setSearchQuery, setFilterCategory])
   );
@@ -276,11 +296,13 @@ export default function PromptsScreen() {
     const trimmed = name.trim();
     if (!trimmed) {
       setShowNewCategory(false);
+      setNewCategoryName('');
       return;
     }
     addCustomCategory(trimmed);
     setFilterCategory(trimmed);
     setShowNewCategory(false);
+    setNewCategoryName('');
     Keyboard.dismiss();
   }, [addCustomCategory, setFilterCategory]);
 
@@ -401,11 +423,9 @@ export default function PromptsScreen() {
     ];
     if (reorderMode) {
       items.push({ id: 'done-reorder', name: 'Done' });
-    } else if (showNewCategory) {
-      items.push({ id: 'new-input', name: '' });
     }
     return items;
-  }, [filterCategories, showNewCategory, reorderMode]);
+  }, [filterCategories, reorderMode]);
 
   const renderHeader = useCallback(() => {
     // Separate items
@@ -464,18 +484,6 @@ export default function PromptsScreen() {
           horizontal
           data={categoryData}
           renderItem={({ item }) => {
-            if (item.id === 'new-input') {
-              return (
-                <CategoryInput
-                  initialName=""
-                  onConfirm={(name) => {
-                    handleCreateCategory(name);
-                  }}
-                  onCancel={() => setShowNewCategory(false)}
-                  placeholder="Category name"
-                />
-              );
-            }
             if (item.id === 'add') {
               return (
                 <Pressable
@@ -485,7 +493,6 @@ export default function PromptsScreen() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Add new category"
-                  android_ripple={{ color: headerColors.onBackground + '14' }}
                   hitSlop={8}
                   style={({ pressed }) => [
                     styles.addBtn,
@@ -523,6 +530,35 @@ export default function PromptsScreen() {
         />
       )}
 
+      {/* New category input - animated below the category row */}
+      {!reorderMode && (
+        <Animated.View style={[styles.newCategoryContainer, newCategoryStyle]}>
+          <View style={[styles.newCategoryWrap, { backgroundColor: headerColors.surfaceContainer, borderColor: headerColors.primary }]}>
+            <TextInput
+              ref={newCategoryInputRef}
+              style={[styles.newCategoryInput, { color: headerColors.onBackground }]}
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              placeholder="Category name"
+              placeholderTextColor={headerColors.disabled}
+              onSubmitEditing={() => handleCreateCategory(newCategoryName)}
+              onBlur={() => { if (!newCategoryName.trim()) setShowNewCategory(false); }}
+              returnKeyType="done"
+              accessibilityLabel="New category name"
+            />
+            <Pressable
+              onPress={() => handleCreateCategory(newCategoryName)}
+              accessibilityRole="button"
+              accessibilityLabel="Confirm"
+              hitSlop={4}
+              style={styles.confirmBtn}
+            >
+              <Ionicons name="checkmark" size={18} color={headerColors.primary} />
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
+
       <View style={styles.resultsRow}>
         <Text style={[styles.resultsText, { color: headerColors.onSurfaceVariant }]}>
           {filteredPrompts.length} prompt{filteredPrompts.length !== 1 ? 's' : ''}
@@ -535,7 +571,6 @@ export default function PromptsScreen() {
             }}
             accessibilityRole="button"
             accessibilityLabel="Done reordering"
-            android_ripple={{ color: headerColors.onBackground + '14' }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.doneBtn,
@@ -549,7 +584,7 @@ export default function PromptsScreen() {
       </View>
     </View>
     );
-  }, [categoryData, filterCategory, filteredPrompts.length, setFilterCategory, showNewCategory, headerColors, handleCreateCategory, reorderMode, setCategoryOrder]);
+  }, [categoryData, filterCategory, filteredPrompts.length, setFilterCategory, showNewCategory, newCategoryName, headerColors, handleCreateCategory, reorderMode, setCategoryOrder]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
@@ -571,11 +606,10 @@ export default function PromptsScreen() {
               onPress={handleExitSelectionMode}
               accessibilityRole="button"
               accessibilityLabel="Exit selection mode"
-              android_ripple={{ color: c.onBackground + '14', borderless: true }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.bulkActionBtn,
-                { backgroundColor: pressed ? c.onBackground + '0D' : 'transparent' },
+                { backgroundColor: pressed ? c.onBackground + '14' : 'transparent' },
               ]}
             >
               <Ionicons name="close" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
@@ -594,11 +628,10 @@ export default function PromptsScreen() {
               onPress={handleBulkDuplicate}
               accessibilityRole="button"
               accessibilityLabel="Duplicate selected"
-              android_ripple={{ color: c.onBackground + '14', borderless: true }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.bulkActionBtn,
-                { backgroundColor: pressed ? c.onBackground + '0D' : 'transparent' },
+                { backgroundColor: pressed ? c.onBackground + '14' : 'transparent' },
               ]}
             >
               <Ionicons name="copy-outline" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
@@ -608,11 +641,10 @@ export default function PromptsScreen() {
               onPress={handleBulkDelete}
               accessibilityRole="button"
               accessibilityLabel="Delete selected"
-              android_ripple={{ color: c.error + '14', borderless: true }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.bulkActionBtn,
-                { backgroundColor: pressed ? c.error + '0D' : 'transparent' },
+                { backgroundColor: pressed ? c.error + '14' : 'transparent' },
               ]}
             >
               <Ionicons name="trash-outline" size={ICON_SIZE.md} color={c.error} />
@@ -678,6 +710,10 @@ export default function PromptsScreen() {
             setContextMenuVisible(false);
           }}
           onSaveAsTemplate={() => setContextMenuVisible(false)}
+          onShare={(prompt) => {
+            Share.share({ message: `${prompt.title}\n\n${prompt.content}` });
+            setContextMenuVisible(false);
+          }}
           onSelect={() => {
             if (contextMenuPrompt) {
               handleEnterSelectionMode(contextMenuPrompt.id);
@@ -689,7 +725,7 @@ export default function PromptsScreen() {
 
       <ColorGridSheet
         visible={colorGridVisible}
-        currentColor={colorGridPrompt?.color || '#7fbf8b'}
+        currentColor={colorGridPrompt?.color || '#4ADE80'}
         onClose={() => {
           setColorGridVisible(false);
           setColorGridPrompt(null);
@@ -725,7 +761,6 @@ export default function PromptsScreen() {
           }}
           accessibilityRole="button"
           accessibilityLabel="Sort categories"
-          android_ripple={{ color: c.onBackground + '14' }}
           style={({ pressed }) => [styles.categoryContextItem, { opacity: pressed ? 0.7 : 1 }]}
         >
           <Ionicons name="reorder-three" size={ICON_SIZE.md} color={c.onBackground} />
@@ -741,7 +776,6 @@ export default function PromptsScreen() {
           }}
           accessibilityRole="button"
           accessibilityLabel="Manage categories"
-          android_ripple={{ color: c.onBackground + '14' }}
           style={({ pressed }) => [styles.categoryContextItem, { opacity: pressed ? 0.7 : 1 }]}
         >
           <Ionicons name="settings-outline" size={ICON_SIZE.md} color={c.onBackground} />
@@ -770,7 +804,6 @@ export default function PromptsScreen() {
               style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
-              android_ripple={{ color: c.onBackground + '14' }}
             >
               <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
             </Pressable>
@@ -783,7 +816,6 @@ export default function PromptsScreen() {
               style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Delete"
-              android_ripple={{ color: c.onError + '30' }}
             >
               <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
             </Pressable>
@@ -794,7 +826,10 @@ export default function PromptsScreen() {
       {/* Bulk delete confirmation */}
       <BottomSheet
         ref={bulkDeleteConfirmRef}
-        onClose={() => {}}
+        onClose={() => {
+          setSelectionMode(false);
+          setSelectedIds(new Set());
+        }}
       >
           <View style={styles.confirmHeader}>
             <View style={[styles.confirmIcon, { backgroundColor: c.error + '18' }]}>
@@ -811,7 +846,6 @@ export default function PromptsScreen() {
               style={({ pressed }) => [styles.confirmCancelBtn, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
-              android_ripple={{ color: c.onBackground + '14' }}
             >
               <Text style={[styles.confirmCancelText, { color: c.onBackground }]}>Cancel</Text>
             </Pressable>
@@ -825,7 +859,6 @@ export default function PromptsScreen() {
               style={({ pressed }) => [styles.confirmDeleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
               accessibilityRole="button"
               accessibilityLabel="Delete all"
-              android_ripple={{ color: c.onError + '30' }}
             >
               <Text style={[styles.confirmDeleteText, { color: c.onError }]}>Delete</Text>
             </Pressable>
@@ -1034,5 +1067,9 @@ const styles = StyleSheet.create({
   bulkCountLabel: {
     fontSize: TYPOGRAPHY.labelSmall.fontSize,
     fontWeight: TYPOGRAPHY.labelSmall.fontWeight,
+  },
+  newCategoryContainer: {
+    overflow: 'hidden',
+    paddingHorizontal: SPACING.lg,
   },
 });

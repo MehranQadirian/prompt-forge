@@ -12,6 +12,7 @@ import { BottomSheetProvider } from '../src/components/BottomSheetContext';
 import SplashOverlay from '../src/components/SplashOverlay';
 import { mapColorBetweenModes } from '../src/theme/tokens';
 
+// Keep native splash visible until our custom splash is ready
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutInner() {
@@ -23,18 +24,20 @@ function RootLayoutInner() {
   const [showSplash, setShowSplash] = useState(true);
   const hasRedirected = useRef(false);
   const prevModeRef = useRef(mode);
-
-  // Hide native splash immediately so our SplashOverlay is visible
-  useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
-  }, []);
+  const splashMountedRef = useRef(false);
 
   // Start loading data immediately — runs in parallel with splash animation
-  const loadingPromise = useMemo(
-    () =>
-      Promise.all([loadSettings(), loadPrompts()]).then(() => {}),
-    []
-  );
+  const loadingPromiseRef = useRef<Promise<void> | null>(null);
+  if (!loadingPromiseRef.current) {
+    loadingPromiseRef.current = Promise.all([loadSettings(), loadPrompts()]).then(() => {});
+  }
+  const loadingPromise = loadingPromiseRef.current;
+
+  // Hide native splash ONLY after our custom SplashOverlay has mounted
+  const handleSplashMounted = useCallback(() => {
+    splashMountedRef.current = true;
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
 
   const handleSplashReady = useCallback(() => {
     setReady(true);
@@ -87,7 +90,11 @@ function RootLayoutInner() {
         />
         {/* Splash overlay on top — fades out when ready, revealing the app */}
         {showSplash && (
-          <SplashOverlay loadingPromise={loadingPromise} onReady={handleSplashReady} />
+          <SplashOverlay
+            loadingPromise={loadingPromise}
+            onReady={handleSplashReady}
+            onMounted={handleSplashMounted}
+          />
         )}
       </BottomSheetProvider>
     </GestureHandlerRootView>

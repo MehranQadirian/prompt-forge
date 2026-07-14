@@ -8,6 +8,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
+  Easing,
 } from 'react-native-reanimated';
 import { PillTabBar, Tab } from '../../src/components/PillTabBar';
 import { usePromptStore } from '../../src/stores/promptStore';
@@ -117,7 +118,7 @@ export default function TabsLayout() {
           listeners={{
             focus: () => {
               setActiveTab('index');
-              activeIndex.value = withSpring(0, SPRING);
+              activeIndex.value = withTiming(0, { duration: 200, easing: Easing.out(Easing.cubic) });
             },
           }}
         />
@@ -127,7 +128,7 @@ export default function TabsLayout() {
           listeners={{
             focus: () => {
               setActiveTab('templates');
-              activeIndex.value = withSpring(1, SPRING);
+              activeIndex.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) });
             },
           }}
         />
@@ -137,7 +138,7 @@ export default function TabsLayout() {
           listeners={{
             focus: () => {
               setActiveTab('settings');
-              activeIndex.value = withSpring(2, SPRING);
+              activeIndex.value = withTiming(2, { duration: 200, easing: Easing.out(Easing.cubic) });
             },
           }}
         />

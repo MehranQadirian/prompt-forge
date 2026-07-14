@@ -58,7 +58,6 @@ export function ColorPickerModal({ visible, currentColor, onClose, onSelect }: C
               accessibilityRole="radio"
               accessibilityLabel={`Color ${color}`}
               accessibilityState={{ selected: isSelected }}
-              android_ripple={{ color: c.onBackground + '14' }}
               style={({ pressed }) => [styles.colorOption, { opacity: pressed ? 0.7 : 1 }]}
             >
               <View

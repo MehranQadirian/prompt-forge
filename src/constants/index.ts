@@ -55,17 +55,26 @@ export const ACTION_COLORS: Record<string, string> = {
 };
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'cat-writing', name: 'Writing', color: '#7FBF8B' },
-  { id: 'cat-development', name: 'Development', color: '#5EA8E0' },
-  { id: 'cat-business', name: 'Business', color: '#E0907A' },
-  { id: 'cat-language', name: 'Language', color: '#B88AD9' },
-  { id: 'cat-ideas', name: 'Ideas', color: '#8BE9FD' },
-  { id: 'cat-analysis', name: 'Analysis', color: '#F1FA8C' },
-  { id: 'cat-education', name: 'Education', color: '#FF79C6' },
-  { id: 'cat-personal', name: 'Personal', color: '#E0907A' },
-  { id: 'cat-learning', name: 'Learning', color: '#8BE9FD' },
-  { id: 'cat-other', name: 'Other', color: '#D9A566' },
+  { id: 'cat-writing', name: 'Writing', dark: '#4ADE80', light: '#16A34A' },
+  { id: 'cat-development', name: 'Development', dark: '#60A5FA', light: '#2563EB' },
+  { id: 'cat-business', name: 'Business', dark: '#FB923C', light: '#EA580C' },
+  { id: 'cat-language', name: 'Language', dark: '#C084FC', light: '#7C3AED' },
+  { id: 'cat-ideas', name: 'Ideas', dark: '#22D3EE', light: '#0891B2' },
+  { id: 'cat-analysis', name: 'Analysis', dark: '#FACC15', light: '#CA8A04' },
+  { id: 'cat-education', name: 'Education', dark: '#F472B6', light: '#DB2777' },
+  { id: 'cat-personal', name: 'Personal', dark: '#FB923C', light: '#EA580C' },
+  { id: 'cat-learning', name: 'Learning', dark: '#22D3EE', light: '#0891B2' },
+  { id: 'cat-marketing', name: 'Marketing', dark: '#F87171', light: '#DC2626' },
+  { id: 'cat-creative', name: 'Creative', dark: '#A78BFA', light: '#7C3AED' },
+  { id: 'cat-productivity', name: 'Productivity', dark: '#34D399', light: '#059669' },
+  { id: 'cat-data', name: 'Data', dark: '#FBBF24', light: '#D97706' },
+  { id: 'cat-other', name: 'Other', dark: '#D9A566', light: '#92400E' },
 ] as const;
+
+export function getCategoryColor(categoryName: string, mode: 'light' | 'dark' = 'dark'): string {
+  const found = DEFAULT_CATEGORIES.find((c) => c.name === categoryName);
+  return found?.[mode] ?? (mode === 'dark' ? '#60A5FA' : '#2563EB');
+}
 
 export const CHARS_PER_TOKEN = 4;
 

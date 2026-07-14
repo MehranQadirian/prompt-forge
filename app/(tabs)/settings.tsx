@@ -45,7 +45,6 @@ export default function SettingsScreen() {
               ]}
               accessibilityRole="button"
               accessibilityLabel={item.label}
-              android_ripple={{ color: theme.color.onBackground + '14' }}
             >
               <Ionicons name={item.icon as any} size={ICON_SIZE.appbar} color={theme.color.primary} />
               <Text style={[styles.menuItemText, { color: theme.color.onBackground }]}>{item.label}</Text>

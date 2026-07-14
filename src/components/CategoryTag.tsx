@@ -78,7 +78,6 @@ export const CategoryTag = React.memo(function CategoryTag({ name, isSelected, o
         accessibilityRole="button"
         accessibilityLabel={`${name} category${isSelected ? ', selected' : ''}`}
         accessibilityState={{ selected: isSelected }}
-        android_ripple={{ color: c.onBackground + '14' }}
         hitSlop={8}
         style={({ pressed }) => [
           styles.container,

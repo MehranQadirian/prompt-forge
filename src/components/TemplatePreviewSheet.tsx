@@ -74,7 +74,6 @@ TemplatePreviewContent.Footer = function TemplatePreviewFooter({ template, onUse
       onPress={handleUse}
       accessibilityRole="button"
       accessibilityLabel={`Use ${template.title} template`}
-      android_ripple={{ color: c.onPrimary + '30' }}
       style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
     >
       <Ionicons name="add-circle-outline" size={ICON_SIZE.sm} color={c.onPrimary} />

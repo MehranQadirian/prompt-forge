@@ -51,7 +51,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
         onPress={handleDeletePress}
         accessibilityRole="button"
         accessibilityLabel="Delete prompt"
-        android_ripple={{ color: c.error + '14' }}
         style={({ pressed }) => [styles.dangerBtn, { opacity: pressed ? 0.7 : 1 }]}
       >
         <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
@@ -62,7 +61,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
         onPress={handleEdit}
         accessibilityRole="button"
         accessibilityLabel="Edit prompt"
-        android_ripple={{ color: c.onPrimary + '30' }}
         style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
       >
         <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onPrimary} />
@@ -95,7 +93,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
             onPress={handleCopy}
             accessibilityRole="button"
             accessibilityLabel="Copy content"
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
             hitSlop={8}
             style={({ pressed }) => [styles.copyBtn, { opacity: pressed ? 0.7 : 1 }]}
           >
@@ -152,7 +149,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
                     onPress={cancelDelete}
                     accessibilityRole="button"
                     accessibilityLabel="Cancel"
-                    android_ripple={{ color: c.onBackground + '14' }}
                     style={({ pressed }) => [styles.cancelBtn, { borderColor: c.outline, opacity: pressed ? 0.7 : 1 }]}
                   >
                     <Text style={[styles.cancelText, { color: c.onSurfaceVariant }]}>Cancel</Text>
@@ -161,7 +157,6 @@ export function PromptPreviewContent({ prompt, onClose, onEdit, onDelete }: Prom
                     onPress={confirmDelete}
                     accessibilityRole="button"
                     accessibilityLabel="Confirm delete"
-                    android_ripple={{ color: c.error + '30' }}
                     style={({ pressed }) => [styles.deleteBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
                   >
                     <Ionicons name="trash" size={ICON_SIZE.sm} color={c.onError} />
@@ -194,7 +189,6 @@ PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, o
         onPress={() => { hapticHeavy(); onDelete(prompt); }}
         accessibilityRole="button"
         accessibilityLabel="Delete prompt"
-        android_ripple={{ color: c.error + '14' }}
         style={({ pressed }) => [styles.dangerBtn, { opacity: pressed ? 0.7 : 1 }]}
       >
         <Ionicons name="trash-outline" size={ICON_SIZE.sm} color={c.error} />
@@ -205,7 +199,6 @@ PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, o
           onPress={() => { hapticLight(); onShare(prompt); }}
           accessibilityRole="button"
           accessibilityLabel="Share prompt"
-          android_ripple={{ color: c.primary + '14' }}
           style={({ pressed }) => [styles.secondaryBtn, { borderColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
         >
           <Ionicons name="share-outline" size={ICON_SIZE.sm} color={c.primary} />
@@ -216,7 +209,6 @@ PromptPreviewContent.Footer = function PromptPreviewFooter({ prompt, onDelete, o
         onPress={() => { hapticMedium(); onEdit(prompt); }}
         accessibilityRole="button"
         accessibilityLabel="Edit prompt"
-        android_ripple={{ color: c.onPrimary + '30' }}
         style={({ pressed }) => [styles.primaryBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
       >
         <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onPrimary} />

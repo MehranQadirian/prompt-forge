@@ -19,9 +19,10 @@ const MIN_DISPLAY_MS = 1800;
 interface SplashOverlayProps {
   loadingPromise: Promise<void>;
   onReady: () => void;
+  onMounted?: () => void;
 }
 
-export default function SplashOverlay({ loadingPromise, onReady }: SplashOverlayProps) {
+export default function SplashOverlay({ loadingPromise, onReady, onMounted }: SplashOverlayProps) {
   const { theme } = useTheme();
   const c = theme.color;
 
@@ -33,6 +34,11 @@ export default function SplashOverlay({ loadingPromise, onReady }: SplashOverlay
   const nameOpacity = useRef(new Animated.Value(0)).current;
   const nameTranslateY = useRef(new Animated.Value(10)).current;
   const taglineOpacity = useRef(new Animated.Value(0)).current;
+
+  // Notify parent that we've mounted, so it can hide the native splash
+  useEffect(() => {
+    onMounted?.();
+  }, []);
 
   // Detect reduced motion
   useEffect(() => {

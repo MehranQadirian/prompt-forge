@@ -2,11 +2,11 @@ import React, { useCallback, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useTheme } from '../../theme/useTheme';
 import { PromptTemplate } from '../../types';
-import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY } from '../../constants';
+import { SPACING, RADIUS, ICON_SIZE, TYPOGRAPHY, getCategoryColor } from '../../constants';
 import { BaseCard } from './BaseCard';
-import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface TemplateCardProps {
   template: PromptTemplate;
@@ -14,10 +14,16 @@ interface TemplateCardProps {
   onLongPress?: () => void;
 }
 
+const COLLAPSED_HEIGHT = 52;
+const EXPANDED_HEIGHT = 200;
+const ANIM_DURATION = 250;
+
 export const TemplateCard = React.memo(function TemplateCard({ template, onPress, onLongPress }: TemplateCardProps) {
-  const { theme } = useTheme();
+  const { theme, mode } = useTheme();
   const c = theme.color;
   const [isExpanded, setIsExpanded] = useState(false);
+  const expandProgress = useSharedValue(0);
+  const categoryColor = getCategoryColor(template.category, mode);
 
   const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -28,6 +34,26 @@ export const TemplateCard = React.memo(function TemplateCard({ template, onPress
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onLongPress?.();
   }, [onLongPress]);
+
+  const handleToggleExpand = useCallback(() => {
+    const next = !isExpanded;
+    setIsExpanded(next);
+    expandProgress.value = withTiming(next ? 1 : 0, {
+      duration: ANIM_DURATION,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [isExpanded]);
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      height: COLLAPSED_HEIGHT + (EXPANDED_HEIGHT - COLLAPSED_HEIGHT) * expandProgress.value,
+      overflow: 'hidden',
+    };
+  });
+
+  const animatedFadeStyle = useAnimatedStyle(() => ({
+    opacity: 1 - expandProgress.value,
+  }));
 
   const preview = useMemo(() => template.content.substring(0, 200), [template.content]);
 
@@ -41,37 +67,31 @@ export const TemplateCard = React.memo(function TemplateCard({ template, onPress
     >
       {/* System badge */}
       {template.isSystem && (
-        <View style={[styles.systemBadge, { backgroundColor: c.primary + '20' }]}>
-          <Ionicons name="shield-checkmark" size={10} color={c.primary} />
-          <Text style={[styles.systemBadgeText, { color: c.primary }]}>System</Text>
+        <View style={[styles.systemBadge, { backgroundColor: categoryColor + '20' }]}>
+          <Text style={[styles.systemBadgeText, { color: categoryColor }]}>System</Text>
         </View>
       )}
 
       {/* Header: Icon + Title + Chevron */}
       <View style={styles.header}>
-        <View style={[styles.icon, { backgroundColor: c.primary + '18' }]}>
-          <Ionicons name="document-text" size={ICON_SIZE.md} color={c.primary} />
+        <View style={[styles.icon, { backgroundColor: categoryColor + '18' }]}>
+          <Ionicons name="reader" size={ICON_SIZE.xl - 3} color={categoryColor} />
         </View>
         <View style={styles.info}>
           <Text style={[styles.title, { color: c.onBackground }]} numberOfLines={1}>
             {template.title}
           </Text>
-          <Text style={[styles.category, { color: c.primary }]}>{template.category}</Text>
+          <Text style={[styles.category, { color: categoryColor }]}>{template.category}</Text>
         </View>
         <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
       </View>
-
-      {/* Body: Description (discovery-focused, highest priority) */}
-      <Text style={[styles.description, { color: c.onSurfaceVariant }]} numberOfLines={2}>
-        {template.description}
-      </Text>
 
       {/* Tags */}
       {template.tags.length > 0 && (
         <View style={styles.tags}>
           {template.tags.slice(0, 3).map((tag) => (
-            <View key={tag} style={[styles.tag, { backgroundColor: c.primary + '18' }]}>
-              <Text style={[styles.tagText, { color: c.primary }]}>{tag}</Text>
+            <View key={tag} style={[styles.tag, { backgroundColor: categoryColor + '18' }]}>
+              <Text style={[styles.tagText, { color: categoryColor }]}>{tag}</Text>
             </View>
           ))}
         </View>
@@ -79,7 +99,7 @@ export const TemplateCard = React.memo(function TemplateCard({ template, onPress
 
       {/* Content preview block */}
       <Pressable
-        onPress={() => setIsExpanded(!isExpanded)}
+        onPress={handleToggleExpand}
         style={[styles.previewContainer, {
           backgroundColor: c.surface,
           borderColor: c.outlineVariant,
@@ -91,29 +111,42 @@ export const TemplateCard = React.memo(function TemplateCard({ template, onPress
         accessibilityLabel={isExpanded ? 'Collapse preview' : 'Expand preview'}
         accessibilityState={{ expanded: isExpanded }}
       >
-        <View style={!isExpanded ? styles.previewTruncated : undefined}>
-          {preview ? (
-            <MarkdownRenderer
-              content={preview}
-              style={styles.previewMarkdown}
-            />
-          ) : (
-            <Text style={[styles.preview, { color: c.onSurfaceVariant }]}>
-              Empty prompt...
-            </Text>
-          )}
-        </View>
+        <Animated.View style={animatedContainerStyle}>
+          <View style={styles.previewContent}>
+            {preview ? (
+              <Text style={[styles.preview, { color: c.onSurfaceVariant }]}>
+                {preview}
+              </Text>
+            ) : (
+              <Text style={[styles.preview, { color: c.onSurfaceVariant }]}>
+                Empty prompt...
+              </Text>
+            )}
+          </View>
+        </Animated.View>
         {!isExpanded && preview.length > 80 && (
-          <View style={[styles.fadeOverlay, { backgroundColor: c.surface }]} />
+          <Animated.View style={[styles.fadeOverlay, { backgroundColor: c.surface }, animatedFadeStyle]} />
         )}
         {preview.length > 80 && (
-          <View style={styles.expandRow}>
+          <Pressable
+            onPress={handleToggleExpand}
+            style={({ pressed }) => [
+              styles.expandBtn,
+              {
+                backgroundColor: categoryColor + '12',
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={isExpanded ? 'Collapse' : 'Expand'}
+          >
             <Ionicons
               name={isExpanded ? 'chevron-up' : 'chevron-down'}
               size={14}
-              color={c.onSurfaceVariant}
+              color={categoryColor}
             />
-          </View>
+          </Pressable>
         )}
       </Pressable>
     </BaseCard>
@@ -190,8 +223,7 @@ const styles = StyleSheet.create({
   previewContainer: {
     marginBottom: 0,
   },
-  previewTruncated: {
-    maxHeight: 52,
+  previewContent: {
     overflow: 'hidden',
   },
   previewMarkdown: {
@@ -209,8 +241,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.caption.fontSize,
     lineHeight: 20,
   },
-  expandRow: {
+  expandBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
-    marginTop: SPACING.xs,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: SPACING.sm,
   },
 });

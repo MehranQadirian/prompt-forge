@@ -326,11 +326,10 @@ export default function EditorScreen() {
           }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: c.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.headerBtn,
-            { opacity: pressed ? 0.7 : 1 },
+            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer, opacity: pressed ? 0.7 : 1 },
           ]}
         >
           <Ionicons name="arrow-back" size={ICON_SIZE.sm} color={c.onBackground} />
@@ -349,11 +348,10 @@ export default function EditorScreen() {
             accessibilityRole="button"
             accessibilityLabel="Undo"
             accessibilityState={{ disabled: !history.canUndo }}
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
-              { opacity: pressed ? 0.7 : (history.canUndo ? 1 : 0.38) },
+              { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer, opacity: pressed ? 0.7 : (history.canUndo ? 1 : 0.38) },
             ]}
           >
             <Ionicons name="arrow-undo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
@@ -364,11 +362,10 @@ export default function EditorScreen() {
             accessibilityRole="button"
             accessibilityLabel="Redo"
             accessibilityState={{ disabled: !history.canRedo }}
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
-              { opacity: pressed ? 0.7 : (history.canRedo ? 1 : 0.38) },
+              { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer, opacity: pressed ? 0.7 : (history.canRedo ? 1 : 0.38) },
             ]}
           >
             <Ionicons name="arrow-redo" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
@@ -377,11 +374,10 @@ export default function EditorScreen() {
             onPress={() => setShowFindReplace(!showFindReplace)}
             accessibilityRole="button"
             accessibilityLabel={showFindReplace ? 'Close find' : 'Find and replace'}
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
-              { opacity: pressed ? 0.7 : 1 },
+              { backgroundColor: pressed ? c.surfaceContainerHigh : showFindReplace ? c.primary + '18' : c.surfaceContainer, opacity: pressed ? 0.7 : 1 },
             ]}
           >
             <Ionicons name="search" size={ICON_SIZE.sm} color={showFindReplace ? c.primary : c.onSurfaceVariant} />
@@ -403,60 +399,59 @@ export default function EditorScreen() {
           />
 
           {/* Title row: color dot + title input */}
-          <View style={styles.titleRow}>
-            <Pressable
-              onPress={() => setShowColorPicker(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Change prompt color"
-              android_ripple={{ color: c.onBackground + '14', borderless: true }}
-              hitSlop={4}
-              style={({ pressed }) => [
-                styles.colorDot,
-                { backgroundColor: prompt.color || c.primary, opacity: pressed ? 0.7 : 1 },
-              ]}
-            />
-            <TextInput
-              ref={titleRef}
-              style={[styles.titleInput, { color: c.onBackground, textAlign: isRTL ? 'right' : 'left' }]}
-              value={title}
-              onChangeText={handleTitleChange}
-              placeholder="Prompt title..."
-              placeholderTextColor={c.disabled}
-              returnKeyType="next"
-              onSubmitEditing={() => contentRef.current?.focus()}
-              accessibilityLabel="Prompt title"
-            />
-          </View>
+            <View style={styles.titleRow}>
+              <Pressable
+                onPress={() => setShowColorPicker(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Change prompt color"
+                hitSlop={4}
+                style={({ pressed }) => [
+                  styles.colorDot,
+                  { backgroundColor: prompt.color || c.primary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              />
+              <TextInput
+                ref={titleRef}
+                style={[styles.titleInput, { color: c.onBackground, textAlign: isRTL ? 'right' : 'left' }]}
+                value={title}
+                onChangeText={handleTitleChange}
+                placeholder="Prompt title..."
+                placeholderTextColor={c.disabled}
+                returnKeyType="next"
+                onSubmitEditing={() => contentRef.current?.focus()}
+                accessibilityLabel="Prompt title"
+              />
+            </View>
 
-          {/* Category row: input + tags */}
-          <View style={styles.categorySection}>
-            <TextInput
-              style={[styles.categoryInput, { color: c.onBackground, backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}
-              value={category}
-              onChangeText={handleCategoryChange}
-              placeholder="Category"
-              placeholderTextColor={c.disabled}
-              accessibilityLabel="Category name"
-            />
-            <FlatList
-              horizontal
-              data={categoryData}
-              renderItem={({ item }) => (
-                <CategoryTag
-                  name={item.name}
-                  isSelected={category === item.name}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setCategory(item.name);
-                    if (id) updatePrompt(id, { category: item.name });
-                  }}
-                />
-              )}
-              keyExtractor={(item) => item.id}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryList}
-            />
-          </View>
+            {/* Category row: input + tags */}
+            <View style={styles.categorySection}>
+              <TextInput
+                style={[styles.categoryInput, { color: c.onBackground, backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}
+                value={category}
+                onChangeText={handleCategoryChange}
+                placeholder="Category"
+                placeholderTextColor={c.disabled}
+                accessibilityLabel="Category name"
+              />
+              <FlatList
+                horizontal
+                data={categoryData}
+                renderItem={({ item }) => (
+                  <CategoryTag
+                    name={item.name}
+                    isSelected={category === item.name}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setCategory(item.name);
+                      if (id) updatePrompt(id, { category: item.name });
+                    }}
+                  />
+                )}
+                keyExtractor={(item) => item.id}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryList}
+              />
+            </View>
 
           {placeholders.length > 0 && <PlaceholderBar text={history.present} onTextChange={handleContentChange} promptId={id} />}
 
@@ -513,6 +508,7 @@ export default function EditorScreen() {
               label={showStats ? 'Hide stats' : 'Show stats'}
               color={c.primary}
               onPress={() => setShowStats(!showStats)}
+              isActive={showStats}
             />
 
             <EnhanceButton isEnhancing={isEnhancing} onPress={handleEnhance} />
@@ -521,7 +517,6 @@ export default function EditorScreen() {
               onPress={handleCopy}
               accessibilityRole="button"
               accessibilityLabel={copied ? 'Copied to clipboard' : 'Copy to clipboard'}
-              android_ripple={{ color: c.onPrimary + '30' }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.copyBtn,
@@ -556,13 +551,14 @@ export default function EditorScreen() {
         visible={showResultSheet}
         enhancedText={enhancedResult}
         error={enhanceError}
+        isLoading={isEnhancing}
         onClose={dismissSheet}
         onReplace={handleEnhancedReplace}
         onInsertBelow={handleEnhancedInsertBelow}
         onCopy={handleEnhancedCopy}
         onOpenSettings={() => {
           dismissSheet();
-          router.push('/(tabs)/settings');
+          router.push('/settings/ai');
         }}
       />
     </SafeAreaView>
@@ -584,7 +580,7 @@ const styles = StyleSheet.create({
   headerBtn: {
     width: BTN_SIZE,
     height: BTN_SIZE,
-    borderRadius: RADIUS.xs,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -657,6 +653,6 @@ const styles = StyleSheet.create({
     height: BTN_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: RADIUS.xs,
+    borderRadius: RADIUS.sm,
   },
 });

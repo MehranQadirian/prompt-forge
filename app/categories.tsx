@@ -271,7 +271,6 @@ export default function CategoriesScreen() {
                   style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${item.name}`}
-                  android_ripple={{ color: c.onBackground + '14',radius:20 }}
                 >
                   <Ionicons name="pencil" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
                 </Pressable>
@@ -280,7 +279,6 @@ export default function CategoriesScreen() {
                   style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${item.name}`}
-                  android_ripple={{ color: c.error + '14' ,radius:20}}
                 >
                   <Ionicons name="trash" size={ICON_SIZE.sm} color={c.error} />
                 </Pressable>
@@ -316,7 +314,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant, borderWidth: 1, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel"
-                android_ripple={{ color: c.onBackground + '14' }}
               >
                 <Text style={[styles.dialogBtnText, { color: c.onBackground }]}>Cancel</Text>
               </Pressable>
@@ -325,7 +322,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Continue"
-                android_ripple={{ color: c.onPrimary + '30' }}
               >
                 <Text style={[styles.dialogBtnText, { color: c.onPrimary }]}>Continue</Text>
               </Pressable>
@@ -355,7 +351,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.error, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Delete all prompts"
-                android_ripple={{ color: c.onError + '30' }}
               >
                 <Text style={[styles.dialogBtnText, { color: c.onError }]}>Delete All</Text>
               </Pressable>
@@ -364,7 +359,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.dialogBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Move to another category"
-                android_ripple={{ color: c.onPrimary + '30' }}
               >
                 <Text style={[styles.dialogBtnText, { color: c.onPrimary }]}>Move to Category</Text>
               </Pressable>
@@ -386,7 +380,6 @@ export default function CategoriesScreen() {
                   style={({ pressed }) => [styles.reassignOption, { borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Move to ${cat.name}`}
-                  android_ripple={{ color: c.onBackground + '14' }}
                 >
                   <Text style={[styles.reassignText, { color: c.onBackground }]}>{cat.name}</Text>
                   <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
@@ -397,7 +390,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.reassignOption, { borderColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Create new category"
-                android_ripple={{ color: c.primary + '14' }}
               >
                 <Ionicons name="add-circle-outline" size={ICON_SIZE.md} color={c.primary} />
                 <Text style={[styles.reassignText, { color: c.primary }]}>Create New Category</Text>
@@ -428,7 +420,6 @@ export default function CategoriesScreen() {
                 style={({ pressed }) => [styles.createCatBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Create and move"
-                android_ripple={{ color: c.onPrimary + '30' }}
               >
                 <Ionicons name="checkmark" size={ICON_SIZE.md} color={c.onPrimary} />
               </Pressable>
@@ -455,7 +446,6 @@ export default function CategoriesScreen() {
           style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: c.onBackground + '14', borderless: true,radius:20 }}
         >
           <Ionicons name="chevron-back" size={24} color={c.onBackground} />
         </Pressable>
@@ -465,10 +455,9 @@ export default function CategoriesScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setIsCreating(true);
           }}
-          style={({ pressed }) => [styles.addBtn]}
+          style={({ pressed }) => [styles.addBtn, { opacity: pressed ? 0.7 : 1 }]}
           accessibilityRole="button"
           accessibilityLabel="Add new category"
-          android_ripple={{ color: c.onBackground + '14', borderless: true,radius:20 }}
         >
           <Ionicons name="add-circle-outline" size={24} color={c.primary} />
         </Pressable>
@@ -495,7 +484,6 @@ export default function CategoriesScreen() {
             style={({ pressed }) => [styles.iconBtn, { backgroundColor: c.primary + '18', opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Confirm create"
-            android_ripple={{ color: c.onBackground + '14' }}
           >
             <Ionicons name="checkmark" size={20} color={c.primary} />
           </Pressable>
@@ -504,7 +492,6 @@ export default function CategoriesScreen() {
             style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel="Cancel create"
-            android_ripple={{ color: c.onBackground + '14' }}
           >
             <Ionicons name="close" size={20} color={c.onSurfaceVariant} />
           </Pressable>

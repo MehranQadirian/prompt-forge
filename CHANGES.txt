@@ -1,31 +1,57 @@
 # Changelog
 
-## v1.2.0
+## Version 1.2.0
+### Removed
+- In-app APK download with real-time progress display
+- Markdown Preview display in Template cards
+- Browser download option as backup
+- Elastic pill mode in tab bar
+### Added
+- Assign color (based on current theme) to Template cards by category
+- Animated expand/collapse for prompt and template card previews
+- Scrollable expanded card content with fixed max height
+- Dark/light theme adaptive category colors for template cards
+### Improved
+- Smoother switching between tabs
+- Improved prompt card colors
+- Swiping buttons on the left and right of the prompt card
+- Prompt card status section
+- Faster tab switching with timing animations
+- Consistent button styles across editor header and toolbar
+### Fixed
+- Set download of new version directly in the browser
+- Fixed pill movement on the tab bar
+- Changed appearance of a new category name entry
+- Moved developer sections to a separate page
+- Bulk delete confirmation sheet now properly exits selection mode on dismiss
+- Template card colors now adapt to light/dark themes
+
+## Version 1.1.0
 ### Added
 - In-app APK download with real-time progress display
-- GitHub release notes display in About page
-- "My Templates" toggle to filter user-created templates
+- Show GitHub release notes on the about page
+- Changed "My Templates" status to filter user-created templates
 - Color-coded swipe action buttons (edit=blue, pin=amber, favorite=gold, delete=red)
-- Theme-aware System badge with shield icon on template cards
+- Theme-aware system badge with shield icon on template cards
 - Markdown rendering in template card previews
-- Expand/collapse functionality for prompt and template previews
-- Debounced storage operations for better performance
+- Open/close capability for quick previews and templates
+- Canceled save operations for better performance
 - Retry button for failed downloads
-- Browser download option as fallback
+- Browser download option as backup
 
 ### Improved
-- Component memoization for faster list scrolling
+- Component caching for faster list scrolling
 - FlatList optimization with windowSize and maxToRenderPerBatch
-- Animation spring configurations for snappier responses
-- Bottom sheet open/close animations (80ms faster)
-- Search bar expand animation (75ms faster)
-- List bottom padding to prevent content overlap with FAB
+- Animation spring settings for faster responses
+- Bottom tab open/close animations (80ms faster)
+- Search bar open animation (75ms faster)
+- List bottom padding to prevent content overlapping with FAB
 
 ### Fixed
-- System tag theme consistency across all themes
-- Template card preview matching prompt card style
-- Last prompt card visibility above Create Prompt button
-- Color change not updating in real-time on prompt cards
+- System tag theme compatibility across all templates
+- Preview Template card matches announcement card style
+- Last announcement card visible above create announcement button
+- Color change in announcement cards not updating in real time
 
 ## v1.0.0
 ### Features

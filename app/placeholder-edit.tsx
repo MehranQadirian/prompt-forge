@@ -78,11 +78,10 @@ export default function PlaceholderEditScreen() {
           onPress={handleBack}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          android_ripple={{ color: c.onBackground + '14', borderless: true }}
           hitSlop={8}
           style={({ pressed }) => [
             styles.headerBtn,
-            { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer },
+            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
           ]}
         >
           <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
@@ -101,11 +100,10 @@ export default function PlaceholderEditScreen() {
             disabled={!value}
             accessibilityRole="button"
             accessibilityLabel={copied ? 'Copied' : 'Copy value'}
-            android_ripple={{ color: c.onBackground + '14', borderless: true }}
             hitSlop={8}
             style={({ pressed }) => [
               styles.headerBtn,
-              { backgroundColor: pressed ? c.onBackground + '0D' : c.surfaceContainer, opacity: value ? 1 : 0.4 },
+              { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer, opacity: value ? 1 : 0.4 },
             ]}
           >
             <Ionicons name={copied ? 'checkmark' : 'copy'} size={ICON_SIZE.md} color={copied ? c.success : c.onSurfaceVariant} />
@@ -149,7 +147,6 @@ export default function PlaceholderEditScreen() {
               onPress={handleClear}
               accessibilityRole="button"
               accessibilityLabel="Clear value"
-              android_ripple={{ color: c.onBackground + '14', borderless: true }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.clearBtn,
@@ -167,7 +164,6 @@ export default function PlaceholderEditScreen() {
             onPress={handleSave}
             accessibilityRole="button"
             accessibilityLabel="Save placeholder value"
-            android_ripple={{ color: c.onPrimary + '30' }}
             style={({ pressed }) => [
               styles.saveBtn,
               { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
