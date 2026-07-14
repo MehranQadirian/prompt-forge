@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, AccessibilityInfo, Animated, Easing } from 'react-native';
 import { useTheme } from '../theme/useTheme';
-import { SPACING, TYPOGRAPHY } from '../constants';
+import { RADIUS, SPACING, TYPOGRAPHY } from '../constants';
 
 // Entrance timing
 const CONTAINER_FADE_IN = 600;
@@ -178,11 +178,13 @@ export default function SplashOverlay({ loadingPromise, onReady, onMounted }: Sp
       style={[styles.container, { backgroundColor: c.background, opacity: containerOpacity }]}
     >
       <View style={styles.content}>
-        <Animated.Image
-          source={require('../../assets/icon.png')}
-          style={[styles.icon, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}
-          resizeMode="contain"
-        />
+        <Animated.View style={[styles.iconContainer, { backgroundColor: c.surfaceContainer, opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
+          <Animated.Image
+            source={require('../../assets/splash-icon.png')}
+            style={styles.icon}
+            resizeMode="contain"
+          />
+        </Animated.View>
 
         <Animated.Text
           style={[
@@ -214,10 +216,17 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
   },
-  icon: {
-    width: 96,
-    height: 96,
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: RADIUS.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: SPACING.xxl,
+  },
+  icon: {
+    width: 100,
+    height: 100,
   },
   appName: {
     ...TYPOGRAPHY.heading,
