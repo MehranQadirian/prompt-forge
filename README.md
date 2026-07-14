@@ -10,11 +10,13 @@ A powerful, beautifully designed prompt management app built with React Native a
 - Pin and favorite prompts for quick access
 - Color-code prompts for visual organization
 - Drag-and-drop reordering
+- Animated expand/collapse for prompt previews with scrollable content
 
 ### AI Enhancement
 - Enhance prompts with AI-powered suggestions
-- Multiple AI provider support (Groq, OpenAI-compatible APIs)
+- Multiple AI provider support (Groq, OpenAI, DeepSeek, Gemini, Claude)
 - Configurable system prompts for AI enhancement
+- Skeleton loading animation during enhancement
 - Token count display
 
 ### Swipe Actions
@@ -23,9 +25,10 @@ A powerful, beautifully designed prompt management app built with React Native a
 - Smooth gesture-driven animations with react-native-reanimated
 
 ### Templates
-- Built-in prompt templates across categories
+- 30+ built-in prompt templates across categories
 - Save custom prompts as templates
 - Browse and preview templates before use
+- Category-based color coding with dark/light theme adaptation
 
 ### Design System
 - 14 theme variants (7 dark, 7 light) with full design tokens
@@ -35,10 +38,14 @@ A powerful, beautifully designed prompt management app built with React Native a
 
 ### Editor
 - Full-featured prompt editor
-- Placeholder management for dynamic prompts
+- Placeholder management for dynamic prompts ([variable] / {variable})
 - Find and replace functionality
-- Markdown rendering
 - Undo/redo support
+- Consistent toolbar styling
+
+### Splash Screen
+- Custom animated splash screen with smooth entrance/exit transitions
+- Shows before app content loads (no flash of unstyled content)
 
 ## Tech Stack
 
@@ -87,37 +94,57 @@ npx expo run:ios
 npx expo start --web
 ```
 
+### Building APK
+
+```bash
+# Development build
+npx expo prebuild --clean
+npx expo run:android
+
+# Production build (EAS)
+eas build --platform android --profile production
+
+# APK build
+eas build --platform android --profile preview
+```
+
 ## Project Structure
 
 ```
 prompt-forge/
 ├── app/                    # Expo Router pages
-│   ├── (tabs)/             # Tab navigation
+│   ├── (tabs)/             # Tab navigation (Prompts, Templates, Settings)
 │   ├── editor.tsx          # Prompt editor
 │   ├── categories.tsx      # Category management
-│   ├── settings/           # App settings
+│   ├── settings/           # App settings (About, AI, Appearance, Developer)
 │   └── welcome.tsx         # Onboarding
 ├── src/
 │   ├── components/         # Reusable UI components
-│   │   ├── cards/          # Card components (BaseCard, PromptCard, SwipeCard)
-│   │   ├── BottomSheet.tsx # Bottom sheet component
+│   │   ├── cards/          # Card components (BaseCard, PromptCard, TemplateCard, SwipeCard)
+│   │   ├── BottomSheet.tsx # Custom bottom sheet (animated, swipe-to-dismiss)
 │   │   ├── ContextMenu.tsx # Context menu
+│   │   ├── PillTabBar.tsx  # Floating tab bar with animated pill
+│   │   ├── SplashOverlay.tsx # Animated splash screen
 │   │   └── ...             # More components
 │   ├── stores/             # Zustand state management
 │   │   ├── promptStore.ts  # Prompt data store
+│   │   ├── templateStore.ts# Template data store
 │   │   ├── settingsStore.ts# App settings store
 │   │   ├── aiStore.ts      # AI provider store
 │   │   └── swipeStore.ts   # Swipe state store
-│   ├── theme/              # Theme system
-│   │   ├── tokens.ts       # 14 theme variants with design tokens
+│   ├── theme/              # Theme system (14 variants)
+│   │   ├── tokens.ts       # Design tokens + color palettes
 │   │   └── ThemeProvider.tsx
+│   ├── services/           # AI and external services
+│   │   └── ai/             # AI provider implementations
+│   ├── hooks/              # Custom React hooks
 │   ├── types/              # TypeScript type definitions
 │   ├── constants/          # App constants and utilities
-│   ├── services/           # AI and external services
-│   ├── hooks/              # Custom React hooks
 │   └── utils/              # Utility functions
-├── assets/                 # Static assets
-└── app.json               # Expo configuration
+├── assets/                 # Static assets (icons, splash)
+├── android/                # Native Android project
+├── app.json                # Expo configuration
+└── CHANGES.txt             # Changelog
 ```
 
 ## Theming
@@ -127,7 +154,11 @@ Prompt Forge includes 14 hand-crafted themes with full design token systems:
 **Dark themes:** Forest, Midnight, Carbon, Plum, Ember, Dracula, Mono
 **Light themes:** Paper, Sky, Sage, Rose, Latte, Lavender, Snow
 
-Each theme provides tokens for surfaces, text, borders, semantic colors, and state indicators.
+Each theme provides tokens for surfaces, text, borders, semantic colors, and state indicators. Template cards use category-based colors that adapt to dark/light themes.
+
+## Changelog
+
+See [CHANGES.txt](CHANGES.txt) for the full changelog.
 
 ## License
 
