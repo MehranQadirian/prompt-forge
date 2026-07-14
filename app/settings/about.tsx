@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Linking, ScrollView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Linking, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,6 +23,17 @@ export default function AboutScreen() {
   const [releaseNotes, setReleaseNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
   const [releaseUrl, setReleaseUrl] = useState('');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('https://github.com/MehranQadirian.png', { method: 'HEAD', redirect: 'follow' })
+      .then((response) => {
+        if (response.ok) setAvatarUri('https://github.com/MehranQadirian.png');
+      })
+      .catch(() => {})
+      .finally(() => setAvatarLoading(false));
+  }, []);
 
   const fetchReleaseNotes = async (version: string) => {
     try {
@@ -125,7 +136,7 @@ export default function AboutScreen() {
         {/* App Info Card */}
         <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           <View style={styles.appInfo}>
-            <AppIcon size={56} />
+            <AppIcon size={120} />
             <View style={styles.appText}>
               <Text style={[styles.appName, { color: c.onBackground }]}>Prompt Forge</Text>
               <Text style={[styles.appVersion, { color: c.disabled }]}>Version {CURRENT_VERSION}</Text>
@@ -149,9 +160,20 @@ export default function AboutScreen() {
           ]}
         >
           <View style={styles.developerInfo}>
-            <View style={[styles.avatar, { backgroundColor: c.primary + '18' }]}>
-              <Text style={[styles.avatarText, { color: c.primary }]}>MG</Text>
-            </View>
+            {avatarUri ? (
+              <Image
+                source={{ uri: avatarUri }}
+                style={[styles.avatar, { backgroundColor: c.primary + '18' }]}
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: c.primary + '18' }]}>
+                {avatarLoading ? (
+                  <ActivityIndicator size="small" color={c.primary} />
+                ) : (
+                  <Text style={[styles.avatarText, { color: c.primary }]}>MG</Text>
+                )}
+              </View>
+            )}
             <View style={styles.developerText}>
               <Text style={[styles.developerName, { color: c.onBackground }]}>Mehran Ghadirian</Text>
               <Text style={[styles.developerRole, { color: c.onSurfaceVariant }]}>Developer</Text>
@@ -337,6 +359,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarText: {
     fontSize: 18,
