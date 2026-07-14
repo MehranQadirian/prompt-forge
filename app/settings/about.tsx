@@ -1,15 +1,30 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Linking, ScrollView, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useTheme } from '../../src/theme/useTheme';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
-import { hapticLight } from '../../src/constants/haptics';
-import { AppIcon } from '../../src/components/AppIcon';
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  Image,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useTheme } from "../../src/theme/useTheme";
+import {
+  SPACING,
+  RADIUS,
+  TYPOGRAPHY,
+  TOUCH_TARGET,
+  ICON_SIZE,
+} from "../../src/constants";
+import { hapticLight } from "../../src/constants/haptics";
+import { AppIcon } from "../../src/components/AppIcon";
 
-const CURRENT_VERSION = '1.2.0';
-const GITHUB_REPO = 'MehranQadirian/prompt-forge';
+const CURRENT_VERSION = "1.2.0";
+const GITHUB_REPO = "MehranQadirian/prompt-forge";
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const CHANGES_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/CHANGES.txt`;
 
@@ -18,18 +33,23 @@ export default function AboutScreen() {
   const { theme } = useTheme();
   const c = theme.color;
   const [checking, setChecking] = useState(false);
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'latest' | 'update' | 'error'>('idle');
-  const [latestVersion, setLatestVersion] = useState('');
-  const [releaseNotes, setReleaseNotes] = useState('');
+  const [updateStatus, setUpdateStatus] = useState<
+    "idle" | "latest" | "update" | "error"
+  >("idle");
+  const [latestVersion, setLatestVersion] = useState("");
+  const [releaseNotes, setReleaseNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const [releaseUrl, setReleaseUrl] = useState('');
+  const [releaseUrl, setReleaseUrl] = useState("");
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://github.com/MehranQadirian.png', { method: 'HEAD', redirect: 'follow' })
+    fetch("https://github.com/MehranQadirian.png", {
+      method: "HEAD",
+      redirect: "follow",
+    })
       .then((response) => {
-        if (response.ok) setAvatarUri('https://github.com/MehranQadirian.png');
+        if (response.ok) setAvatarUri("https://github.com/MehranQadirian.png");
       })
       .catch(() => {})
       .finally(() => setAvatarLoading(false));
@@ -38,70 +58,77 @@ export default function AboutScreen() {
   const fetchReleaseNotes = async (version: string) => {
     try {
       const response = await fetch(CHANGES_URL);
-      if (!response.ok) return '';
+      if (!response.ok) return "";
       const text = await response.text();
       const versionHeader = `## v${version}`;
       const versionIndex = text.indexOf(versionHeader);
-      if (versionIndex === -1) return '';
+      if (versionIndex === -1) return "";
 
-      const nextVersionMatch = text.substring(versionIndex + versionHeader.length).match(/\n## v\d/);
-      const nextVersionIndex = nextVersionMatch && nextVersionMatch.index !== undefined
-        ? versionIndex + versionHeader.length + nextVersionMatch.index
-        : text.length;
+      const nextVersionMatch = text
+        .substring(versionIndex + versionHeader.length)
+        .match(/\n## v\d/);
+      const nextVersionIndex =
+        nextVersionMatch && nextVersionMatch.index !== undefined
+          ? versionIndex + versionHeader.length + nextVersionMatch.index
+          : text.length;
 
-      const notes = text.substring(versionIndex + versionHeader.length, nextVersionIndex).trim();
+      const notes = text
+        .substring(versionIndex + versionHeader.length, nextVersionIndex)
+        .trim();
       return notes;
     } catch {
-      return '';
+      return "";
     }
   };
 
   const checkForUpdates = useCallback(async () => {
     hapticLight();
     setChecking(true);
-    setUpdateStatus('idle');
+    setUpdateStatus("idle");
     setShowNotes(false);
 
     try {
       const response = await fetch(GITHUB_API_URL, {
-        headers: { Accept: 'application/vnd.github.v3+json' },
+        headers: { Accept: "application/vnd.github.v3+json" },
       });
 
       if (!response.ok) {
-        setUpdateStatus('error');
+        setUpdateStatus("error");
         return;
       }
 
       const data = await response.json();
-      const tagName = data.tag_name || '';
+      const tagName = data.tag_name || "";
       const versionMatch = tagName.match(/v(\d+)-(\d+)-(\d+)/);
       if (versionMatch) {
         const version = `${versionMatch[1]}.${versionMatch[2]}.${versionMatch[3]}`;
         setLatestVersion(version);
 
         // Find the APK asset download URL
-        const apkAsset = data.assets?.find((a: any) => a.name?.endsWith('.apk'));
+        const apkAsset = data.assets?.find((a: any) =>
+          a.name?.endsWith(".apk"),
+        );
         if (apkAsset) {
           setReleaseUrl(apkAsset.browser_download_url);
         } else {
           // Fallback to release page if no APK found
-          setReleaseUrl(data.html_url || '');
+          setReleaseUrl(data.html_url || "");
         }
 
-        const currentParts = CURRENT_VERSION.split('.').map(Number);
-        const latestParts = version.split('.').map(Number);
+        const currentParts = CURRENT_VERSION.split(".").map(Number);
+        const latestParts = version.split(".").map(Number);
         const isNewer = latestParts.some((v, i) => v > (currentParts[i] || 0));
 
         if (isNewer) {
           const notes = await fetchReleaseNotes(version);
           setReleaseNotes(notes);
         }
-        setUpdateStatus(isNewer ? 'update' : 'latest');
+        setUpdateStatus(isNewer ? "update" : "latest");
       } else {
-        setUpdateStatus('error');
+        setUpdateStatus("error");
       }
     } catch (error) {
-      setUpdateStatus('error');
+      setUpdateStatus("error");
     } finally {
       setChecking(false);
     }
@@ -114,7 +141,10 @@ export default function AboutScreen() {
   }, [releaseUrl]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: c.background }]}
+      edges={["top", "bottom"]}
+    >
       <View style={styles.header}>
         <Pressable
           onPress={() => router.back()}
@@ -123,10 +153,18 @@ export default function AboutScreen() {
           hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
+            {
+              backgroundColor: pressed
+                ? c.surfaceContainerHigh
+                : c.surfaceContainer,
+            },
           ]}
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
+          <Ionicons
+            name="arrow-back"
+            size={ICON_SIZE.md}
+            color={c.onBackground}
+          />
         </Pressable>
         <Text style={[styles.title, { color: c.onBackground }]}>About</Text>
         <View style={{ width: TOUCH_TARGET }} />
@@ -134,57 +172,101 @@ export default function AboutScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* App Info Card */}
-        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: c.surfaceContainer,
+              borderColor: c.outlineVariant,
+            },
+          ]}
+        >
           <View style={styles.appInfo}>
-            <AppIcon size={120} />
+            <AppIcon size={200} style={styles.appIcon} />
             <View style={styles.appText}>
-              <Text style={[styles.appName, { color: c.onBackground }]}>Prompt Forge</Text>
-              <Text style={[styles.appVersion, { color: c.disabled }]}>Version {CURRENT_VERSION}</Text>
+              <Text style={[styles.appName, { color: c.onBackground }]}>
+                Prompt Forge
+              </Text>
+              <Text style={[styles.appVersion, { color: c.disabled }]}>
+                Version {CURRENT_VERSION}
+              </Text>
             </View>
           </View>
-          <View style={[styles.appDivider, { backgroundColor: c.outlineVariant }]} />
+          <View
+            style={[styles.appDivider, { backgroundColor: c.outlineVariant }]}
+          />
           <Text style={[styles.appDesc, { color: c.onSurfaceVariant }]}>
             A focused notepad for crafting perfect AI prompts.
           </Text>
         </View>
 
         {/* Developer Card */}
-        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Developer</Text>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>
+          Developer
+        </Text>
         <Pressable
-          onPress={() => router.push('/settings/developer')}
+          onPress={() => router.push("/settings/developer")}
           accessibilityRole="button"
           accessibilityLabel="View developer profile"
           style={({ pressed }) => [
             styles.card,
-            { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant, opacity: pressed ? 0.7 : 1 },
+            {
+              backgroundColor: c.surfaceContainer,
+              borderColor: c.outlineVariant,
+              opacity: pressed ? 0.7 : 1,
+            },
           ]}
         >
           <View style={styles.developerInfo}>
             {avatarUri ? (
               <Image
                 source={{ uri: avatarUri }}
-                style={[styles.avatar, { backgroundColor: c.primary + '18' }]}
+                style={[styles.avatar, { backgroundColor: c.primary + "18" }]}
               />
             ) : (
-              <View style={[styles.avatar, { backgroundColor: c.primary + '18' }]}>
+              <View
+                style={[styles.avatar, { backgroundColor: c.primary + "18" }]}
+              >
                 {avatarLoading ? (
                   <ActivityIndicator size="small" color={c.primary} />
                 ) : (
-                  <Text style={[styles.avatarText, { color: c.primary }]}>MG</Text>
+                  <Text style={[styles.avatarText, { color: c.primary }]}>
+                    MG
+                  </Text>
                 )}
               </View>
             )}
             <View style={styles.developerText}>
-              <Text style={[styles.developerName, { color: c.onBackground }]}>Mehran Ghadirian</Text>
-              <Text style={[styles.developerRole, { color: c.onSurfaceVariant }]}>Developer</Text>
+              <Text style={[styles.developerName, { color: c.onBackground }]}>
+                Mehran Ghadirian
+              </Text>
+              <Text
+                style={[styles.developerRole, { color: c.onSurfaceVariant }]}
+              >
+                Developer
+              </Text>
             </View>
-            <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
+            <Ionicons
+              name="chevron-forward"
+              size={ICON_SIZE.sm}
+              color={c.disabled}
+            />
           </View>
         </Pressable>
 
         {/* Update Section */}
-        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Updates</Text>
-        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>
+          Updates
+        </Text>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: c.surfaceContainer,
+              borderColor: c.outlineVariant,
+            },
+          ]}
+        >
           <Pressable
             onPress={checkForUpdates}
             disabled={checking}
@@ -197,27 +279,49 @@ export default function AboutScreen() {
           >
             <Ionicons name="refresh" size={ICON_SIZE.md} color={c.primary} />
             <Text style={[styles.updateLabel, { color: c.onBackground }]}>
-              {checking ? 'Checking...' : 'Check for Updates'}
+              {checking ? "Checking..." : "Check for Updates"}
             </Text>
             {checking ? (
               <ActivityIndicator size="small" color={c.primary} />
             ) : (
-              <Ionicons name="chevron-forward" size={ICON_SIZE.sm} color={c.disabled} />
+              <Ionicons
+                name="chevron-forward"
+                size={ICON_SIZE.sm}
+                color={c.disabled}
+              />
             )}
           </Pressable>
 
-          {updateStatus === 'latest' && (
-            <View style={[styles.updateStatus, { borderTopColor: c.outlineVariant }]}>
-              <Ionicons name="checkmark-circle" size={ICON_SIZE.md} color={c.success} />
+          {updateStatus === "latest" && (
+            <View
+              style={[
+                styles.updateStatus,
+                { borderTopColor: c.outlineVariant },
+              ]}
+            >
+              <Ionicons
+                name="checkmark-circle"
+                size={ICON_SIZE.md}
+                color={c.success}
+              />
               <Text style={[styles.updateStatusText, { color: c.success }]}>
                 You're up to date!
               </Text>
             </View>
           )}
 
-          {updateStatus === 'update' && (
-            <View style={[styles.updateStatus, { borderTopColor: c.outlineVariant }]}>
-              <Ionicons name="arrow-up-circle" size={ICON_SIZE.md} color={c.primary} />
+          {updateStatus === "update" && (
+            <View
+              style={[
+                styles.updateStatus,
+                { borderTopColor: c.outlineVariant },
+              ]}
+            >
+              <Ionicons
+                name="arrow-up-circle"
+                size={ICON_SIZE.md}
+                color={c.primary}
+              />
               <View style={styles.updateInfo}>
                 <Text style={[styles.updateStatusText, { color: c.primary }]}>
                   Update available: v{latestVersion}
@@ -226,35 +330,63 @@ export default function AboutScreen() {
                   onPress={openInBrowser}
                   accessibilityRole="button"
                   accessibilityLabel="Download in browser"
-                  style={({ pressed }) => [styles.downloadBtn, { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 }]}
+                  style={({ pressed }) => [
+                    styles.downloadBtn,
+                    { backgroundColor: c.primary, opacity: pressed ? 0.7 : 1 },
+                  ]}
                 >
-                  <Ionicons name="open-outline" size={ICON_SIZE.sm} color={c.onPrimary} />
-                  <Text style={[styles.downloadText, { color: c.onPrimary }]}>Download</Text>
+                  <Ionicons
+                    name="open-outline"
+                    size={ICON_SIZE.sm}
+                    color={c.onPrimary}
+                  />
+                  <Text style={[styles.downloadText, { color: c.onPrimary }]}>
+                    Download
+                  </Text>
                 </Pressable>
               </View>
             </View>
           )}
 
-          {updateStatus === 'update' && releaseNotes && (
-            <View style={[styles.notesSection, { borderTopColor: c.outlineVariant }]}>
+          {updateStatus === "update" && releaseNotes && (
+            <View
+              style={[
+                styles.notesSection,
+                { borderTopColor: c.outlineVariant },
+              ]}
+            >
               <Pressable
                 onPress={() => setShowNotes(!showNotes)}
                 accessibilityRole="button"
-                accessibilityLabel={showNotes ? 'Hide changes' : 'Show changes'}
-                style={({ pressed }) => [styles.notesToggle, { opacity: pressed ? 0.7 : 1 }]}
+                accessibilityLabel={showNotes ? "Hide changes" : "Show changes"}
+                style={({ pressed }) => [
+                  styles.notesToggle,
+                  { opacity: pressed ? 0.7 : 1 },
+                ]}
               >
-                <Ionicons name="list-outline" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
-                <Text style={[styles.notesToggleText, { color: c.onSurfaceVariant }]}>
+                <Ionicons
+                  name="list-outline"
+                  size={ICON_SIZE.md}
+                  color={c.onSurfaceVariant}
+                />
+                <Text
+                  style={[
+                    styles.notesToggleText,
+                    { color: c.onSurfaceVariant },
+                  ]}
+                >
                   What's new in v{latestVersion}
                 </Text>
                 <Ionicons
-                  name={showNotes ? 'chevron-up' : 'chevron-down'}
+                  name={showNotes ? "chevron-up" : "chevron-down"}
                   size={ICON_SIZE.sm}
                   color={c.onSurfaceVariant}
                 />
               </Pressable>
               {showNotes && (
-                <View style={[styles.notesContent, { backgroundColor: c.surface }]}>
+                <View
+                  style={[styles.notesContent, { backgroundColor: c.surface }]}
+                >
                   <Text style={[styles.notesText, { color: c.onBackground }]}>
                     {releaseNotes}
                   </Text>
@@ -263,9 +395,18 @@ export default function AboutScreen() {
             </View>
           )}
 
-          {updateStatus === 'error' && (
-            <View style={[styles.updateStatus, { borderTopColor: c.outlineVariant }]}>
-              <Ionicons name="alert-circle" size={ICON_SIZE.md} color={c.error} />
+          {updateStatus === "error" && (
+            <View
+              style={[
+                styles.updateStatus,
+                { borderTopColor: c.outlineVariant },
+              ]}
+            >
+              <Ionicons
+                name="alert-circle"
+                size={ICON_SIZE.md}
+                color={c.error}
+              />
               <Text style={[styles.updateStatusText, { color: c.error }]}>
                 Could not check for updates
               </Text>
@@ -282,9 +423,9 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
   },
@@ -292,8 +433,8 @@ const styles = StyleSheet.create({
     width: TOUCH_TARGET,
     height: TOUCH_TARGET,
     borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     ...TYPOGRAPHY.title,
@@ -301,9 +442,15 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: SPACING.lg,
   },
+  appIcon: {
+    marginLeft:-30,
+    marginTop:-30,
+    marginBottom:-30,
+    marginRight:-20
+  },
   sectionTitle: {
     ...TYPOGRAPHY.captionSemibold,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: SPACING.sm,
     marginTop: SPACING.xl,
@@ -312,13 +459,13 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
 
   // App Info
   appInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
@@ -328,7 +475,7 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: TYPOGRAPHY.heading.fontSize,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   appVersion: {
     ...TYPOGRAPHY.caption,
@@ -347,8 +494,8 @@ const styles = StyleSheet.create({
 
   // Developer
   developerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
@@ -357,13 +504,13 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   avatarText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   developerText: {
     flex: 1,
@@ -378,8 +525,8 @@ const styles = StyleSheet.create({
 
   // Update
   updateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
@@ -390,8 +537,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   updateStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
@@ -405,8 +552,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   downloadBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
@@ -415,14 +562,14 @@ const styles = StyleSheet.create({
   },
   downloadText: {
     ...TYPOGRAPHY.captionMedium,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   notesSection: {
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   notesToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,

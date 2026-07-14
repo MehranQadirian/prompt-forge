@@ -217,16 +217,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconContainer: {
-    width: 120,
-    height: 120,
+    width: 100,
+    height: 100,
     borderRadius: RADIUS.xl,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.xxl,
   },
   icon: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
   },
   appName: {
     ...TYPOGRAPHY.heading,
