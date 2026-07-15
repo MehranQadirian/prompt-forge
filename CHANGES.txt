@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 1.2.1
+## v1.2.1
 ### Fixed
 - Swipe action buttons (left/right) now work correctly after being pressed — card properly closes and resets state
 - Swipe gestures work in both directions at any time — can open/close from any state
@@ -16,7 +16,7 @@
 - Optional haptic feedback adapter for threshold-crossing and commit events
 - Memoized gesture recognizer to avoid unnecessary rebuilds on re-render
 
-## Version 1.2.0
+## v1.2.0
 ### Removed
 - In-app APK download with real-time progress display
 - Markdown Preview display in Template cards
@@ -42,7 +42,7 @@
 - Bulk delete confirmation sheet now properly exits selection mode on dismiss
 - Template card colors now adapt to light/dark themes
 
-## Version 1.1.0
+## v1.1.0
 ### Added
 - In-app APK download with real-time progress display
 - Show GitHub release notes on the about page
