@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 1.2.1
+### Fixed
+- Swipe action buttons (left/right) now work correctly after being pressed — card properly closes and resets state
+- Swipe gestures work in both directions at any time — can open/close from any state
+- Tap detection uses raw gesture translation instead of clamped value, fixing false-positive tap classification
+- Cross-card close no longer fights in-progress gestures on the current card
+- Double action-fire prevented during spring settling animation
+
+### Improved
+- Rubber band elastic drag past action width (iOS-style diminishing-returns curve)
+- Separate spring configs for opening (energetic) vs closing (calm) animations
+- Action reveal animation with multi-keyframe opacity, translateX, and scale
+- Respect OS "Reduce Motion" accessibility setting
+- Optional haptic feedback adapter for threshold-crossing and commit events
+- Memoized gesture recognizer to avoid unnecessary rebuilds on re-render
+
 ## Version 1.2.0
 ### Removed
 - In-app APK download with real-time progress display
