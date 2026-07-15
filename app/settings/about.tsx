@@ -22,11 +22,12 @@ import {
 } from "../../src/constants";
 import { hapticLight } from "../../src/constants/haptics";
 import { AppIcon } from "../../src/components/AppIcon";
+import { MarkdownRenderer } from "../../src/components/MarkdownRenderer";
 
-const CURRENT_VERSION = "1.2.1";
+const CURRENT_VERSION = "1.2.2";
 const GITHUB_REPO = "MehranQadirian/prompt-forge";
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
-const CHANGES_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/CHANGES.txt`;
+const CHANGES_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/master/CHANGES.txt`;
 
 export default function AboutScreen() {
   const router = useRouter();
@@ -60,13 +61,13 @@ export default function AboutScreen() {
       const response = await fetch(CHANGES_URL);
       if (!response.ok) return "";
       const text = await response.text();
-      const versionHeader = `## v${version}`;
+      const versionHeader = `## Version ${version}`;
       const versionIndex = text.indexOf(versionHeader);
       if (versionIndex === -1) return "";
 
       const nextVersionMatch = text
         .substring(versionIndex + versionHeader.length)
-        .match(/\n## v\d/);
+        .match(/\n## (?:Version|v)\d/);
       const nextVersionIndex =
         nextVersionMatch && nextVersionMatch.index !== undefined
           ? versionIndex + versionHeader.length + nextVersionMatch.index
@@ -387,9 +388,7 @@ export default function AboutScreen() {
                 <View
                   style={[styles.notesContent, { backgroundColor: c.surface }]}
                 >
-                  <Text style={[styles.notesText, { color: c.onBackground }]}>
-                    {releaseNotes}
-                  </Text>
+                  <MarkdownRenderer content={releaseNotes} />
                 </View>
               )}
             </View>
@@ -581,9 +580,5 @@ const styles = StyleSheet.create({
   notesContent: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.md,
-  },
-  notesText: {
-    ...TYPOGRAPHY.caption,
-    lineHeight: 20,
   },
 });
