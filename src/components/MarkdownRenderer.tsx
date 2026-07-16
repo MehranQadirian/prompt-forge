@@ -462,7 +462,9 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, 
 });
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {
+    paddingVertical:SPACING.lg,
+  },
   listItem: {
     flexDirection: 'row',
     gap: SPACING.sm,

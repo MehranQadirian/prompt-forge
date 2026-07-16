@@ -73,9 +73,7 @@ export default function AboutScreen() {
           ? versionIndex + versionHeader.length + nextVersionMatch.index
           : text.length;
 
-      const notes = text
-        .substring(versionIndex, nextVersionIndex)
-        .trim();
+      const notes = text.substring(versionIndex, nextVersionIndex).trim();
       return notes;
     } catch {
       return "";
@@ -348,50 +346,59 @@ export default function AboutScreen() {
             </View>
           )}
 
-          {(updateStatus === "update" || updateStatus === "latest") && releaseNotes && (
-            <View
-              style={[
-                styles.notesSection,
-                { borderTopColor: c.outlineVariant },
-              ]}
-            >
-              <Pressable
-                onPress={() => setShowNotes(!showNotes)}
-                accessibilityRole="button"
-                accessibilityLabel={showNotes ? "Hide changes" : "Show changes"}
-                style={({ pressed }) => [
-                  styles.notesToggle,
-                  { opacity: pressed ? 0.7 : 1 },
+          {(updateStatus === "update" || updateStatus === "latest") &&
+            releaseNotes && (
+              <View
+                style={[
+                  styles.notesSection,
+                  { borderTopColor: c.outlineVariant },
                 ]}
               >
-                <Ionicons
-                  name="list-outline"
-                  size={ICON_SIZE.md}
-                  color={c.onSurfaceVariant}
-                />
-                <Text
-                  style={[
-                    styles.notesToggleText,
-                    { color: c.onSurfaceVariant },
+                <Pressable
+                  onPress={() => setShowNotes(!showNotes)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showNotes ? "Hide changes" : "Show changes"
+                  }
+                  style={({ pressed }) => [
+                    styles.notesToggle,
+                    { opacity: pressed ? 0.7 : 1 },
                   ]}
                 >
-                  What's new in v{updateStatus === "update" ? latestVersion : CURRENT_VERSION}
-                </Text>
-                <Ionicons
-                  name={showNotes ? "chevron-up" : "chevron-down"}
-                  size={ICON_SIZE.sm}
-                  color={c.onSurfaceVariant}
-                />
-              </Pressable>
-              {showNotes && (
-                <View
-                  style={[styles.notesContent, { backgroundColor: c.surface }]}
-                >
-                  <MarkdownRenderer content={releaseNotes} />
-                </View>
-              )}
-            </View>
-          )}
+                  <Ionicons
+                    name="list-outline"
+                    size={ICON_SIZE.md}
+                    color={c.onSurfaceVariant}
+                  />
+                  <Text
+                    style={[
+                      styles.notesToggleText,
+                      { color: c.onSurfaceVariant },
+                    ]}
+                  >
+                    What's new in v
+                    {updateStatus === "update"
+                      ? latestVersion
+                      : CURRENT_VERSION}
+                  </Text>
+                  <Ionicons
+                    name={showNotes ? "chevron-up" : "chevron-down"}
+                    size={ICON_SIZE.sm}
+                    color={c.onSurfaceVariant}
+                  />
+                </Pressable>
+                {showNotes && (
+                  <View
+                    style={[
+                      styles.notesContent,
+                      { backgroundColor: c.surface },
+                    ]}
+                  >
+                    <MarkdownRenderer content={releaseNotes} />
+                  </View>
+                )}
+              </View>
+            )}
 
           {updateStatus === "error" && (
             <View
@@ -419,7 +426,9 @@ export default function AboutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -434,12 +443,13 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.lg,
+    paddingVertical:SPACING.lg,
   },
   appIcon: {
-    marginLeft:-30,
-    marginTop:-30,
-    marginBottom:-30,
-    marginRight:-20
+    marginLeft: -30,
+    marginTop: -30,
+    marginBottom: -30,
+    marginRight: -20,
   },
   sectionTitle: {
     ...TYPOGRAPHY.captionSemibold,
