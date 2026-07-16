@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 1.2.3
+### Fixed
+- Some bugs fixed
+
 ## Version 1.2.2
 ### Fixed
 - About page now correctly fetches changelog from the master branch

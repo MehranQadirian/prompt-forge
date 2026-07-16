@@ -209,6 +209,7 @@ Each theme provides tokens for surface colors, text colors, semantic colors, bor
 See [CHANGES.txt](CHANGES.txt) for the full changelog.
 
 **Recent highlights:**
+- **v1.2.3** — Some bugs fixed
 - **v1.2.2** — Fixed about page update checker, markdown rendering for release notes
 - **v1.2.1** — Fixed swipe actions, bidirectional swipes, rubber band drag, accessibility
 - **v1.2.0** — Template card colors, animated previews, improved tab switching

@@ -24,7 +24,7 @@ import { hapticLight } from "../../src/constants/haptics";
 import { AppIcon } from "../../src/components/AppIcon";
 import { MarkdownRenderer } from "../../src/components/MarkdownRenderer";
 
-const CURRENT_VERSION = "1.2.2";
+const CURRENT_VERSION = "1.2.3";
 const GITHUB_REPO = "MehranQadirian/prompt-forge";
 const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`;
 const CHANGES_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/master/CHANGES.txt`;
