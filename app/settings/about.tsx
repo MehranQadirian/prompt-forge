@@ -123,6 +123,9 @@ export default function AboutScreen() {
         if (isNewer) {
           const notes = await fetchReleaseNotes(version);
           setReleaseNotes(notes);
+        } else {
+          const notes = await fetchReleaseNotes(CURRENT_VERSION);
+          setReleaseNotes(notes);
         }
         setUpdateStatus(isNewer ? "update" : "latest");
       } else {
@@ -349,7 +352,7 @@ export default function AboutScreen() {
             </View>
           )}
 
-          {updateStatus === "update" && releaseNotes && (
+          {(updateStatus === "update" || updateStatus === "latest") && releaseNotes && (
             <View
               style={[
                 styles.notesSection,
@@ -376,7 +379,7 @@ export default function AboutScreen() {
                     { color: c.onSurfaceVariant },
                   ]}
                 >
-                  What's new in v{latestVersion}
+                  What's new in v{updateStatus === "update" ? latestVersion : CURRENT_VERSION}
                 </Text>
                 <Ionicons
                   name={showNotes ? "chevron-up" : "chevron-down"}
