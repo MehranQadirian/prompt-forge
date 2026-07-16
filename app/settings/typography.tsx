@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useTheme } from '../../src/theme/useTheme';
 import * as Haptics from 'expo-haptics';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
+import { SPACING, RADIUS, TYPOGRAPHY, ICON_SIZE } from '../../src/constants';
 
 const FONT_OPTIONS = [
   { value: 'system', label: 'System' },
@@ -25,29 +25,30 @@ export default function TypographyScreen() {
   const router = useRouter();
   const { settings, setFontSize, setFontFamily } = useSettingsStore();
   const { theme } = useTheme();
+  const c = theme.color;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.color.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.surfaceContainerHigh : theme.color.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
+          <Ionicons name="chevron-back" size={ICON_SIZE.lg} color={c.onBackground} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.color.onBackground }]}>Typography</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <Text style={[styles.title, { color: c.onBackground }]}>Typography</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Font Size</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Font Size</Text>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           {FONT_SIZE_OPTIONS.map((option) => (
             <Pressable
               key={option.value}
@@ -61,20 +62,20 @@ export default function TypographyScreen() {
               style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: settings.fontSize === option.value ? theme.color.primary + '18' : 'transparent',
-                  borderBottomColor: theme.color.outlineVariant,
+                  backgroundColor: settings.fontSize === option.value ? c.primary + '18' : 'transparent',
+                  borderBottomColor: c.outlineVariant,
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
             >
-              <Text style={[styles.optionText, { color: theme.color.onBackground }]}>{option.label}</Text>
-              {settings.fontSize === option.value && <Ionicons name="checkmark" size={ICON_SIZE.list} color={theme.color.primary} />}
+              <Text style={[styles.optionText, { color: c.onBackground }]}>{option.label}</Text>
+              {settings.fontSize === option.value && <Ionicons name="checkmark" size={ICON_SIZE.list} color={c.primary} />}
             </Pressable>
           ))}
         </View>
 
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Font Family</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Font Family</Text>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           {FONT_OPTIONS.map((option) => (
             <Pressable
               key={option.value}
@@ -88,8 +89,8 @@ export default function TypographyScreen() {
               style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: settings.fontFamily === option.value ? theme.color.primary + '18' : 'transparent',
-                  borderBottomColor: theme.color.outlineVariant,
+                  backgroundColor: settings.fontFamily === option.value ? c.primary + '18' : 'transparent',
+                  borderBottomColor: c.outlineVariant,
                   opacity: pressed ? 0.7 : 1,
                 },
               ]}
@@ -98,14 +99,14 @@ export default function TypographyScreen() {
                 style={[
                   styles.optionText,
                   {
-                    color: theme.color.onBackground,
+                    color: c.onBackground,
                     fontFamily: option.value === 'mono' ? 'monospace' : option.value === 'serif' ? 'serif' : undefined,
                   },
                 ]}
               >
                 {option.label}
               </Text>
-              {settings.fontFamily === option.value && <Ionicons name="checkmark" size={ICON_SIZE.list} color={theme.color.primary} />}
+              {settings.fontFamily === option.value && <Ionicons name="checkmark" size={ICON_SIZE.list} color={c.primary} />}
             </Pressable>
           ))}
         </View>
@@ -122,18 +123,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
   content: {
     paddingHorizontal: SPACING.lg,
@@ -158,7 +154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: TOUCH_TARGET,
+    minHeight: 48,
   },
   optionText: {
     ...TYPOGRAPHY.body,

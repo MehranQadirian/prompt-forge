@@ -67,14 +67,14 @@ export default function AboutScreen() {
 
       const nextVersionMatch = text
         .substring(versionIndex + versionHeader.length)
-        .match(/\n## (?:Version|v)\d/);
+        .match(/\n## (?:Version|v)\s+\d/);
       const nextVersionIndex =
         nextVersionMatch && nextVersionMatch.index !== undefined
           ? versionIndex + versionHeader.length + nextVersionMatch.index
           : text.length;
 
       const notes = text
-        .substring(versionIndex + versionHeader.length, nextVersionIndex)
+        .substring(versionIndex, nextVersionIndex)
         .trim();
       return notes;
     } catch {
@@ -149,29 +149,25 @@ export default function AboutScreen() {
       style={[styles.container, { backgroundColor: c.background }]}
       edges={["top", "bottom"]}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            {
-              backgroundColor: pressed
-                ? c.surfaceContainerHigh
-                : c.surfaceContainer,
-            },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
           <Ionicons
-            name="arrow-back"
-            size={ICON_SIZE.md}
+            name="chevron-back"
+            size={ICON_SIZE.lg}
             color={c.onBackground}
           />
         </Pressable>
         <Text style={[styles.title, { color: c.onBackground }]}>About</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -428,18 +424,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
   content: {
     paddingHorizontal: SPACING.lg,

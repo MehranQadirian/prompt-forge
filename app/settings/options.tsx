@@ -7,7 +7,7 @@ import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { SwipeAction } from '../../src/types';
 import * as Haptics from 'expo-haptics';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
+import { SPACING, RADIUS, TYPOGRAPHY, ICON_SIZE } from '../../src/constants';
 
 const SWIPE_OPTIONS: { value: SwipeAction; label: string; icon: string }[] = [
   { value: 'edit', label: 'Edit', icon: 'pencil' },
@@ -72,21 +72,21 @@ export default function OptionsScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
+          <Ionicons name="chevron-back" size={ICON_SIZE.lg} color={c.onBackground} />
         </Pressable>
         <Text style={[styles.title, { color: c.onBackground }]}>Options</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -128,18 +128,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
   content: {
     paddingHorizontal: SPACING.lg,
@@ -163,7 +158,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    minHeight: TOUCH_TARGET,
+    minHeight: 48,
   },
   switchLabel: {
     ...TYPOGRAPHY.body,

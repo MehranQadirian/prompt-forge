@@ -409,8 +409,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
+    paddingTop: SPACING.sm,
     paddingBottom: SPACING.lg,
   },
   overlay: {

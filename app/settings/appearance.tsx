@@ -1,159 +1,235 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Switch } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useTheme } from '../../src/theme/useTheme';
-import { ThemeVariant } from '../../src/types';
-import * as Haptics from 'expo-haptics';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
-import { darkThemeVariants, lightThemeVariants, getThemeTokens } from '../../src/theme';
+import React, { useCallback } from "react";
+import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import { useTheme } from "../../src/theme/useTheme";
+import { ThemeVariant } from "../../src/types";
+import {
+  darkThemeVariants,
+  lightThemeVariants,
+  getThemeTokens,
+} from "../../src/theme/tokens";
+import { SPACING, RADIUS, TYPOGRAPHY, ICON_SIZE } from "../../src/constants";
+import { hapticMedium } from "../../src/constants/haptics";
 
-const THEME_DESCRIPTIONS: Record<ThemeVariant, string> = {
-  forest: 'Green natural theme',
-  midnight: 'Deep blue theme',
-  carbon: 'Pure dark gray',
-  plum: 'Rich purple theme',
-  ember: 'Warm orange theme',
-  dracula: 'Classic dark theme',
-  mono: 'Minimal monochrome',
-  paper: 'Clean light theme',
-  sky: 'Soft blue light',
-  sage: 'Green light theme',
-  rose: 'Pink light theme',
-  latte: 'Warm beige light',
-  lavender: 'Purple light theme',
-  snow: 'Pure white theme',
-};
+const SPRING_CONFIG = { damping: 18, stiffness: 300, mass: 0.5 };
+const PRESS_IN_CONFIG = { damping: 20, stiffness: 400, mass: 0.4 };
+const PRESS_OUT_CONFIG = { damping: 16, stiffness: 320, mass: 0.4 };
+
+/* ---------- Animated Theme Card ---------- */
+
+function ThemeCard({
+  variant,
+  isSelected,
+  onSelect,
+}: {
+  variant: ThemeVariant;
+  isSelected: boolean;
+  onSelect: (v: ThemeVariant) => void;
+}) {
+  const tokens = getThemeTokens(variant);
+  const pressScale = useSharedValue(1);
+  const selectedScale = useSharedValue(isSelected ? 1 : 0.8);
+  const selectedOpacity = useSharedValue(isSelected ? 1 : 0);
+
+  React.useEffect(() => {
+    if (isSelected) {
+      selectedScale.value = withSpring(1, SPRING_CONFIG);
+      selectedOpacity.value = withTiming(1, { duration: 120 });
+    } else {
+      selectedScale.value = withTiming(0.8, { duration: 100 });
+      selectedOpacity.value = withTiming(0, { duration: 100 });
+    }
+  }, [isSelected]);
+
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  const checkAnimStyle = useAnimatedStyle(() => ({
+    opacity: selectedOpacity.value,
+    transform: [{ scale: selectedScale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    pressScale.value = withSpring(0.94, PRESS_IN_CONFIG);
+  }, []);
+
+  const handlePressOut = useCallback(() => {
+    pressScale.value = withSpring(1, PRESS_OUT_CONFIG);
+  }, []);
+
+  const handlePress = useCallback(() => {
+    if (!isSelected) hapticMedium();
+    onSelect(variant);
+  }, [isSelected, variant, onSelect]);
+
+  return (
+    <View style={styles.themeCardWrapper}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={`${variant} theme`}
+      >
+        <Animated.View
+          style={[
+            styles.themeCard,
+            cardAnimStyle,
+            {
+              backgroundColor: tokens.color.surfaceContainer,
+              borderColor: isSelected
+                ? tokens.color.primary
+                : tokens.color.outlineVariant,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.themePreview,
+              { backgroundColor: tokens.color.background },
+            ]}
+          >
+            <View
+              style={[
+                styles.themePreviewBar,
+                { backgroundColor: tokens.color.primary },
+              ]}
+            />
+            <View
+              style={[
+                styles.themePreviewLine,
+                { backgroundColor: tokens.color.text },
+              ]}
+            />
+            <View
+              style={[
+                styles.themePreviewLine2,
+                { backgroundColor: tokens.color.onSurfaceVariant },
+              ]}
+            />
+
+            <Animated.View
+              style={[
+                styles.checkBadge,
+                checkAnimStyle,
+                { backgroundColor: tokens.color.primary },
+              ]}
+            >
+              <Ionicons name="checkmark" size={14} color="#FFFFFF" />
+            </Animated.View>
+          </View>
+          <Text
+            style={[styles.themeName, { color: tokens.color.onBackground }]}
+          >
+            {variant}
+          </Text>
+        </Animated.View>
+      </Pressable>
+    </View>
+  );
+}
+
+/* ---------- Screen ---------- */
 
 export default function AppearanceScreen() {
   const router = useRouter();
-  const { theme, themeVariant, followSystem, setTheme, setFollowSystem } = useTheme();
+  const { theme, themeVariant, setTheme } = useTheme();
+
+  const handleSelectTheme = useCallback(
+    (variant: ThemeVariant) => {
+      setTheme(variant);
+    },
+    [setTheme],
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.color.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.color.background }]}
+      edges={["top", "bottom"]}
+    >
+      <View
+        style={[
+          styles.header,
+          { borderBottomColor: theme.color.outlineVariant },
+        ]}
+      >
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.surfaceContainerHigh : theme.color.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
+          <Ionicons
+            name="chevron-back"
+            size={ICON_SIZE.lg}
+            color={theme.color.onBackground}
+          />
         </Pressable>
-        <Text style={[styles.title, { color: theme.color.onBackground }]}>Appearance</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <Text style={[styles.title, { color: theme.color.onBackground }]}>
+          Appearance
+        </Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Theme</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
-          <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, { color: theme.color.onBackground }]}>Follow System</Text>
-            <Switch
-              value={followSystem}
-              onValueChange={(val) => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setFollowSystem(val);
-              }}
-              accessibilityLabel="Follow system theme"
-              trackColor={{ false: theme.color.disabledContainer, true: theme.color.primary + '80' }}
-              thumbColor={followSystem ? theme.color.primary : theme.color.disabled}
-            />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.color.onSurfaceVariant },
+            ]}
+          >
+            Dark Themes
+          </Text>
+          <View style={styles.themeGrid}>
+            {darkThemeVariants.map((variant) => (
+              <ThemeCard
+                key={variant}
+                variant={variant}
+                isSelected={themeVariant === variant}
+                onSelect={handleSelectTheme}
+              />
+            ))}
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Dark Themes</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
-          {darkThemeVariants.map((variant) => {
-            const t = getThemeTokens(variant);
-            const isSelected = themeVariant === variant;
-            return (
-              <Pressable
+        <View>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.color.onSurfaceVariant },
+            ]}
+          >
+            Light Themes
+          </Text>
+          <View style={styles.themeGrid}>
+            {lightThemeVariants.map((variant) => (
+              <ThemeCard
                 key={variant}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setTheme(variant);
-                  if (followSystem) setFollowSystem(false);
-                }}
-                accessibilityRole="radio"
-                accessibilityLabel={`${variant} theme`}
-                accessibilityState={{ selected: isSelected }}
-                style={({ pressed }) => [
-                  styles.themeOption,
-                  {
-                    backgroundColor: isSelected ? theme.color.primary + '18' : 'transparent',
-                    borderColor: isSelected ? theme.color.primary : 'transparent',
-                    borderBottomColor: theme.color.outlineVariant,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <View style={styles.themeLeft}>
-                  <View style={styles.themePreview}>
-                    <View style={[styles.previewDot, { backgroundColor: t.color.background }]} />
-                    <View style={[styles.previewDot, { backgroundColor: t.color.surfaceContainer }]} />
-                    <View style={[styles.previewDot, { backgroundColor: t.color.primary }]} />
-                  </View>
-                  <View>
-                    <Text style={[styles.themeName, { color: theme.color.onBackground }]}>{variant.charAt(0).toUpperCase() + variant.slice(1)}</Text>
-                    <Text style={[styles.themeDesc, { color: theme.color.disabled }]}>{THEME_DESCRIPTIONS[variant]}</Text>
-                  </View>
-                </View>
-                {isSelected && <Ionicons name="checkmark-circle" size={ICON_SIZE.list} color={theme.color.primary} />}
-              </Pressable>
-            );
-          })}
+                variant={variant}
+                isSelected={themeVariant === variant}
+                onSelect={handleSelectTheme}
+              />
+            ))}
+          </View>
         </View>
-
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Light Themes</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
-          {lightThemeVariants.map((variant) => {
-            const t = getThemeTokens(variant);
-            const isSelected = themeVariant === variant;
-            return (
-              <Pressable
-                key={variant}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  setTheme(variant);
-                  if (followSystem) setFollowSystem(false);
-                }}
-                accessibilityRole="radio"
-                accessibilityLabel={`${variant} theme`}
-                accessibilityState={{ selected: isSelected }}
-                style={({ pressed }) => [
-                  styles.themeOption,
-                  {
-                    backgroundColor: isSelected ? theme.color.primary + '18' : 'transparent',
-                    borderColor: isSelected ? theme.color.primary : 'transparent',
-                    borderBottomColor: theme.color.outlineVariant,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <View style={styles.themeLeft}>
-                  <View style={styles.themePreview}>
-                    <View style={[styles.previewDot, { backgroundColor: t.color.background }]} />
-                    <View style={[styles.previewDot, { backgroundColor: t.color.surfaceContainer }]} />
-                    <View style={[styles.previewDot, { backgroundColor: t.color.primary }]} />
-                  </View>
-                  <View>
-                    <Text style={[styles.themeName, { color: theme.color.onBackground }]}>{variant.charAt(0).toUpperCase() + variant.slice(1)}</Text>
-                    <Text style={[styles.themeDesc, { color: theme.color.disabled }]}>{THEME_DESCRIPTIONS[variant]}</Text>
-                  </View>
-                </View>
-                {isSelected && <Ionicons name="checkmark-circle" size={ICON_SIZE.list} color={theme.color.primary} />}
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -162,77 +238,47 @@ export default function AppearanceScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    ...TYPOGRAPHY.title,
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.captionSemibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
-    marginTop: SPACING.xl,
-    paddingHorizontal: SPACING.xs,
-  },
-  card: {
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  themeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: TOUCH_TARGET,
   },
-  themeLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
+  backBtn: { padding: SPACING.sm, width: 40 },
+  title: { ...TYPOGRAPHY.subheading },
+  content: { padding: SPACING.lg, gap: SPACING.lg },
+  sectionTitle: {
+    ...TYPOGRAPHY.captionMedium,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: SPACING.md,
   },
-  themePreview: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-  },
-  previewDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-  },
+  themeGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.md },
+  themeCardWrapper: { width: "47%" },
+  themeCard: { borderRadius: RADIUS.lg, overflow: "hidden", borderWidth: 2 },
+  themePreview: { height: 80, padding: SPACING.sm, gap: 4 },
+  themePreviewBar: { width: "60%", height: 8, borderRadius: 4 },
+  themePreviewLine: { width: "80%", height: 4, borderRadius: 2 },
+  themePreviewLine2: { width: "50%", height: 4, borderRadius: 2 },
   themeName: {
-    ...TYPOGRAPHY.bodyMedium,
+    ...TYPOGRAPHY.captionMedium,
+    textTransform: "capitalize",
+    padding: SPACING.sm,
   },
-  themeDesc: {
-    ...TYPOGRAPHY.labelSmallMedium,
-    marginTop: SPACING.xs,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    minHeight: TOUCH_TARGET,
-  },
-  switchLabel: {
-    ...TYPOGRAPHY.body,
+  checkBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
 });

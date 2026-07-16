@@ -11,6 +11,7 @@ import { useTheme } from '../src/theme/useTheme';
 import { BottomSheetProvider } from '../src/components/BottomSheetContext';
 import SplashOverlay from '../src/components/SplashOverlay';
 import { mapColorBetweenModes } from '../src/theme/tokens';
+import React from 'react';
 
 // Keep native splash visible until our custom splash is ready
 SplashScreen.preventAutoHideAsync();

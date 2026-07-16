@@ -26,16 +26,16 @@ async function fetchReleaseNotes(version: string): Promise<string> {
     const response = await fetch(CHANGES_URL);
     if (!response.ok) return '';
     const text = await response.text();
-    const versionHeader = `## v${version}`;
+    const versionHeader = `## Version ${version}`;
     const versionIndex = text.indexOf(versionHeader);
     if (versionIndex === -1) return '';
 
-    const nextVersionMatch = text.substring(versionIndex + versionHeader.length).match(/\n## v\d/);
+    const nextVersionMatch = text.substring(versionIndex + versionHeader.length).match(/\n## (?:Version|v)\s+\d/);
     const nextVersionIndex = nextVersionMatch && nextVersionMatch.index !== undefined
       ? versionIndex + versionHeader.length + nextVersionMatch.index
       : text.length;
 
-    return text.substring(versionIndex + versionHeader.length, nextVersionIndex).trim();
+    return text.substring(versionIndex, nextVersionIndex).trim();
   } catch {
     return '';
   }

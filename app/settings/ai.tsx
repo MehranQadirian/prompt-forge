@@ -14,7 +14,7 @@ import { useAIStore } from '../../src/stores/aiStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { AIProviderId, AIProviderConfig } from '../../src/types';
 import * as Haptics from 'expo-haptics';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE, AI_DEFAULTS } from '../../src/constants';
+import { SPACING, RADIUS, TYPOGRAPHY, ICON_SIZE, AI_DEFAULTS } from '../../src/constants';
 
 const PROVIDER_IDS: AIProviderId[] = ['groq', 'openai', 'deepseek', 'gemini', 'claude'];
 
@@ -198,6 +198,7 @@ function ProviderRow({
 export default function AISettingsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const c = theme.color;
   const {
     activeProviderId,
     providerConfigs,
@@ -240,30 +241,30 @@ export default function AISettingsScreen() {
   }, [systemPrompt]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.color.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? theme.color.surfaceContainerHigh : theme.color.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={theme.color.onBackground} />
+          <Ionicons name="chevron-back" size={ICON_SIZE.lg} color={c.onBackground} />
         </Pressable>
-        <Text style={[styles.title, { color: theme.color.onBackground }]}>AI Enhancement</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <Text style={[styles.title, { color: c.onBackground }]}>AI Enhancement</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={[styles.sectionTitle, { color: theme.color.onSurfaceVariant }]}>Provider</Text>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
+        <Text style={[styles.sectionTitle, { color: c.onSurfaceVariant }]}>Provider</Text>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           <View style={styles.switchRow}>
-            <Text style={[styles.switchLabel, { color: theme.color.onBackground }]}>Active Provider</Text>
-            <Text style={[styles.switchLabel, { color: theme.color.primary }]}>
+            <Text style={[styles.switchLabel, { color: c.onBackground }]}>Active Provider</Text>
+            <Text style={[styles.switchLabel, { color: c.primary }]}>
               {providerConfigs[activeProviderId]?.name || 'None'}
             </Text>
           </View>
@@ -293,24 +294,24 @@ export default function AISettingsScreen() {
             />
           ))}
 
-          <View style={[styles.systemPromptSection, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.outlineVariant }]}>
+          <View style={[styles.systemPromptSection, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.outlineVariant }]}>
             <View style={styles.systemPromptHeader}>
-              <Ionicons name="document-text" size={ICON_SIZE.md} color={theme.color.primary} />
-              <Text style={[styles.systemPromptTitle, { color: theme.color.onBackground }]}>System Prompt</Text>
+              <Ionicons name="document-text" size={ICON_SIZE.md} color={c.primary} />
+              <Text style={[styles.systemPromptTitle, { color: c.onBackground }]}>System Prompt</Text>
             </View>
-            <Text style={[styles.systemPromptDesc, { color: theme.color.onSurfaceVariant }]}>
+            <Text style={[styles.systemPromptDesc, { color: c.onSurfaceVariant }]}>
               This instruction tells the AI how to improve your prompts. Edit it to customize the enhancement behavior.
             </Text>
             <TextInput
               style={[styles.systemPromptInput, {
-                color: theme.color.onBackground,
-                backgroundColor: theme.color.surfaceContainerHigh,
-                borderColor: systemPromptDirty ? theme.color.primary : theme.color.outlineVariant,
+                color: c.onBackground,
+                backgroundColor: c.surfaceContainerHigh,
+                borderColor: systemPromptDirty ? c.primary : c.outlineVariant,
               }]}
               value={localSystemPrompt}
               onChangeText={handleSystemPromptChange}
               placeholder="System prompt..."
-              placeholderTextColor={theme.color.disabled}
+              placeholderTextColor={c.disabled}
               multiline
               textAlignVertical="top"
               accessibilityLabel="System prompt"
@@ -323,11 +324,11 @@ export default function AISettingsScreen() {
                 accessibilityLabel="Reset to default"
                 style={({ pressed }) => [
                   styles.resetBtn,
-                  { borderColor: theme.color.outlineVariant, opacity: pressed || !systemPromptDirty ? 0.7 : 1 },
+                  { borderColor: c.outlineVariant, opacity: pressed || !systemPromptDirty ? 0.7 : 1 },
                 ]}
               >
-                <Ionicons name="refresh" size={ICON_SIZE.sm} color={theme.color.onSurfaceVariant} />
-                <Text style={[styles.resetBtnText, { color: theme.color.onSurfaceVariant }]}>Reset</Text>
+                <Ionicons name="refresh" size={ICON_SIZE.sm} color={c.onSurfaceVariant} />
+                <Text style={[styles.resetBtnText, { color: c.onSurfaceVariant }]}>Reset</Text>
               </Pressable>
               <Pressable
                 onPress={handleSaveSystemPrompt}
@@ -337,25 +338,25 @@ export default function AISettingsScreen() {
                 style={({ pressed }) => [
                   styles.savePromptBtn,
                   {
-                    backgroundColor: systemPromptDirty ? theme.color.primary : theme.color.disabledContainer,
+                    backgroundColor: systemPromptDirty ? c.primary : c.disabledContainer,
                     opacity: pressed || !systemPromptDirty ? 0.7 : 1,
                   },
                 ]}
               >
-                <Ionicons name="checkmark" size={ICON_SIZE.sm} color={systemPromptDirty ? theme.color.onPrimary : theme.color.disabled} />
-                <Text style={[styles.savePromptBtnText, { color: systemPromptDirty ? theme.color.onPrimary : theme.color.disabled }]}>
+                <Ionicons name="checkmark" size={ICON_SIZE.sm} color={systemPromptDirty ? c.onPrimary : c.disabled} />
+                <Text style={[styles.savePromptBtnText, { color: systemPromptDirty ? c.onPrimary : c.disabled }]}>
                   Save
                 </Text>
               </Pressable>
             </View>
           </View>
 
-          <View style={[styles.privacyContainer, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.color.outlineVariant }]}>
+          <View style={[styles.privacyContainer, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.outlineVariant }]}>
             <View style={styles.privacyHeader}>
-              <Ionicons name="shield-checkmark" size={ICON_SIZE.md} color={theme.color.onSurfaceVariant} />
-              <Text style={[styles.privacyTitle, { color: theme.color.onSurfaceVariant }]}>Privacy</Text>
+              <Ionicons name="shield-checkmark" size={ICON_SIZE.md} color={c.onSurfaceVariant} />
+              <Text style={[styles.privacyTitle, { color: c.onSurfaceVariant }]}>Privacy</Text>
             </View>
-            <Text style={[styles.privacyText, { color: theme.color.disabled }]}>
+            <Text style={[styles.privacyText, { color: c.disabled }]}>
               Your API keys are securely stored on your device using the operating system's secure
               credential storage. They are only used to communicate directly with the AI provider
               you choose and are never collected or transmitted anywhere else by Prompt Forge.
@@ -375,18 +376,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
   content: {
     paddingHorizontal: SPACING.lg,
@@ -410,7 +406,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
-    minHeight: TOUCH_TARGET,
+    minHeight: 48,
   },
   switchLabel: {
     ...TYPOGRAPHY.body,
@@ -422,7 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: TOUCH_TARGET,
+    minHeight: 48,
   },
   providerLeft: {
     flex: 1,

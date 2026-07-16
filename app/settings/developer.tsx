@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/useTheme';
-import { SPACING, RADIUS, TYPOGRAPHY, TOUCH_TARGET, ICON_SIZE } from '../../src/constants';
+import { SPACING, RADIUS, TYPOGRAPHY, ICON_SIZE } from '../../src/constants';
 
 const GITHUB_AVATAR_URL = 'https://github.com/MehranQadirian.png';
 
@@ -16,16 +16,13 @@ export default function DeveloperScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try to fetch GitHub avatar
     fetch(GITHUB_AVATAR_URL, { method: 'HEAD', redirect: 'follow' })
       .then((response) => {
         if (response.ok) {
           setAvatarUri(GITHUB_AVATAR_URL);
         }
       })
-      .catch(() => {
-        // No internet or error — keep avatarUri null, show fallback
-      })
+      .catch(() => {})
       .finally(() => {
         setLoading(false);
       });
@@ -33,25 +30,24 @@ export default function DeveloperScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={8}
           style={({ pressed }) => [
             styles.backBtn,
-            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
         >
-          <Ionicons name="arrow-back" size={ICON_SIZE.md} color={c.onBackground} />
+          <Ionicons name="chevron-back" size={ICON_SIZE.lg} color={c.onBackground} />
         </Pressable>
         <Text style={[styles.title, { color: c.onBackground }]}>Developer</Text>
-        <View style={{ width: TOUCH_TARGET }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.content}>
-        {/* Developer Profile Card */}
         <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           <View style={styles.avatarContainer}>
             {avatarUri ? (
@@ -69,7 +65,7 @@ export default function DeveloperScreen() {
               </View>
             )}
           </View>
-          
+
           <Text style={[styles.developerName, { color: c.onBackground }]}>Mehran Ghadirian</Text>
           <Text style={[styles.developerRole, { color: c.onSurfaceVariant }]}>Developer</Text>
 
@@ -139,18 +135,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
   content: {
     flex: 1,

@@ -440,14 +440,18 @@ export default function CategoriesScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
         <Pressable
           onPress={() => router.back()}
-          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [
+            styles.backBtn,
+            { opacity: pressed ? 0.5 : 1 },
+          ]}
+          hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Ionicons name="chevron-back" size={24} color={c.onBackground} />
+          <Ionicons name="chevron-back" size={ICON_SIZE.lg} color={c.onBackground} />
         </Pressable>
         <Text style={[styles.title, { color: c.onBackground }]}>Categories</Text>
         <Pressable
@@ -455,7 +459,10 @@ export default function CategoriesScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             setIsCreating(true);
           }}
-          style={({ pressed }) => [styles.addBtn, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [
+            styles.addBtn,
+            { opacity: pressed ? 0.5 : 1 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Add new category"
         >
@@ -529,27 +536,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  backBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  backBtn: { padding: SPACING.sm, width: 40 },
   title: {
-    fontSize: TYPOGRAPHY.title.fontSize,
-    fontWeight: TYPOGRAPHY.title.fontWeight,
+    ...TYPOGRAPHY.subheading,
     flex: 1,
     textAlign: 'center',
   },
-  addBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  addBtn: { padding: SPACING.sm, width: 40, alignItems: 'center', justifyContent: 'center' },
   createRow: {
     flexDirection: 'row',
     alignItems: 'center',

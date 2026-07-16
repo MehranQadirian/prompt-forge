@@ -84,7 +84,6 @@ export interface AppSettings {
   fontFamily: string;
   hasOnboarded: boolean;
   showTokenCount: boolean;
-  followSystem: boolean;
   swipeLeftAction: SwipeAction;
   swipeRightAction: SwipeAction;
 }

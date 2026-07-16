@@ -26,7 +26,6 @@ interface SettingsState {
   setFontFamily: (family: string) => void;
   setOnboarded: () => void;
   setShowTokenCount: (show: boolean) => void;
-  setFollowSystem: (follow: boolean) => void;
   setSwipeLeftAction: (action: SwipeAction) => void;
   setSwipeRightAction: (action: SwipeAction) => void;
 }
@@ -37,7 +36,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   fontFamily: 'system',
   hasOnboarded: false,
   showTokenCount: true,
-  followSystem: false,
   swipeLeftAction: 'edit',
   swipeRightAction: 'delete',
 };
@@ -104,13 +102,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setShowTokenCount: (showTokenCount) => {
     set((state) => ({
       settings: { ...state.settings, showTokenCount },
-    }));
-    get().debouncedSave();
-  },
-
-  setFollowSystem: (followSystem) => {
-    set((state) => ({
-      settings: { ...state.settings, followSystem },
     }));
     get().debouncedSave();
   },

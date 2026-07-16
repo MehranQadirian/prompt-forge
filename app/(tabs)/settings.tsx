@@ -19,15 +19,16 @@ const SETTINGS_ITEMS = [
 export default function SettingsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const c = theme.color;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.color.background }]} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.color.onBackground }]}>Settings</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.background }]} edges={['top', 'bottom']}>
+      <View style={[styles.header, { borderBottomColor: c.outlineVariant }]}>
+        <Text style={[styles.title, { color: c.onBackground }]}>Settings</Text>
       </View>
 
       <View style={styles.content}>
-        <View style={[styles.card, { backgroundColor: theme.color.surfaceContainer, borderColor: theme.color.outlineVariant }]}>
+        <View style={[styles.card, { backgroundColor: c.surfaceContainer, borderColor: c.outlineVariant }]}>
           {SETTINGS_ITEMS.map((item, index) => (
             <Pressable
               key={item.id}
@@ -38,7 +39,7 @@ export default function SettingsScreen() {
               style={({ pressed }) => [
                 styles.menuItem,
                 {
-                  borderBottomColor: theme.color.outlineVariant,
+                  borderBottomColor: c.outlineVariant,
                   borderBottomWidth: index < SETTINGS_ITEMS.length - 1 ? StyleSheet.hairlineWidth : 0,
                   opacity: pressed ? 0.7 : 1,
                 },
@@ -46,9 +47,9 @@ export default function SettingsScreen() {
               accessibilityRole="button"
               accessibilityLabel={item.label}
             >
-              <Ionicons name={item.icon as any} size={ICON_SIZE.appbar} color={theme.color.primary} />
-              <Text style={[styles.menuItemText, { color: theme.color.onBackground }]}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={ICON_SIZE.list} color={theme.color.disabled} />
+              <Ionicons name={item.icon as any} size={ICON_SIZE.appbar} color={c.primary} />
+              <Text style={[styles.menuItemText, { color: c.onBackground }]}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={ICON_SIZE.list} color={c.disabled} />
             </Pressable>
           ))}
         </View>
@@ -60,11 +61,14 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.xl,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
+    fontSize:32,
+    fontWeight:'700'
   },
   content: {
     paddingHorizontal: SPACING.lg,
@@ -73,6 +77,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     overflow: 'hidden',
+    marginTop:SPACING.xl,
   },
   menuItem: {
     flexDirection: 'row',

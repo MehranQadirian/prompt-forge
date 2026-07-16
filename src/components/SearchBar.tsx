@@ -57,19 +57,19 @@ export const SearchBar = React.memo(function SearchBar({ title, query, onQueryCh
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { borderBottomColor: c.outlineVariant }]}>
         <Text style={[styles.title, { color: c.onBackground }]}>{title}</Text>
         <Pressable
           onPress={handleToggle}
-          accessibilityRole="button"
-          accessibilityLabel={isVisible ? 'Close search' : 'Open search'}
-          hitSlop={8}
           style={({ pressed }) => [
             styles.iconBtn,
-            { backgroundColor: pressed ? c.surfaceContainerHigh : c.surfaceContainer },
+            { opacity: pressed ? 0.5 : 1 },
           ]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={isVisible ? 'Close search' : 'Open search'}
         >
-          <Ionicons name={isVisible ? 'close' : 'search'} size={ICON_SIZE.md} color={c.onSurfaceVariant} />
+          <Ionicons name={isVisible ? 'close' : 'search'} size={ICON_SIZE.lg} color={c.onSurfaceVariant} />
         </Pressable>
       </View>
 
@@ -110,17 +110,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   title: {
-    ...TYPOGRAPHY.title,
+    ...TYPOGRAPHY.subheading,
   },
-  iconBtn: {
-    width: TOUCH_TARGET,
-    height: TOUCH_TARGET,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  iconBtn: { padding: SPACING.sm, width: 40, alignItems: 'center', justifyContent: 'center' },
   expandedWrap: {
     overflow: 'hidden',
   },

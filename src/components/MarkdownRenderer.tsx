@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TextStyle } from 'react-native';
+import { View, Text, StyleSheet, TextStyle, Linking, Pressable } from 'react-native';
 import { useTheme } from '../theme/useTheme';
 import { SPACING, RADIUS, TYPOGRAPHY } from '../constants';
 
@@ -12,14 +12,17 @@ type InlineToken =
   | { type: 'text'; value: string }
   | { type: 'bold'; value: string }
   | { type: 'italic'; value: string }
+  | { type: 'bolditalic'; value: string }
+  | { type: 'strikethrough'; value: string }
   | { type: 'code'; value: string }
   | { type: 'link'; text: string; url: string }
+  | { type: 'image'; alt: string; url: string }
   | { type: 'placeholder'; value: string };
 
 type Block =
   | { type: 'heading'; level: number; inlines: InlineToken[] }
   | { type: 'paragraph'; inlines: InlineToken[] }
-  | { type: 'list-item'; inlines: InlineToken[]; ordered: boolean; number?: number }
+  | { type: 'list-item'; inlines: InlineToken[]; ordered: boolean; number?: number; indent: number; checked?: boolean }
   | { type: 'blockquote'; inlines: InlineToken[] }
   | { type: 'code-block'; language?: string; code: string }
   | { type: 'table'; headers: string[]; rows: string[][] }
@@ -27,8 +30,8 @@ type Block =
 
 function parseInline(text: string): InlineToken[] {
   const tokens: InlineToken[] = [];
-  // Combined regex for bold, italic, inline code, links, and placeholders
-  const regex = /(\*\*(.+?)\*\*|__(.+?)__)|(\*(.+?)\*|_(.+?)_)|(`([^`]+)`)|(\[([^\]]+)\]\(([^)]+)\))|(\[([^\[\]]+)\])/g;
+  // Combined regex for bold+italic, bold, italic, strikethrough, inline code, images, links, placeholders, and autolinks
+  const regex = /(\*\*\*(.+?)\*\*\*|___(.+?)___)|(\*\*(.+?)\*\*|__(.+?)__)|(\*(.+?)\*|_(.+?)_)|(\~\~(.+?)\~\~)|(`([^`]+)`)|(!\[([^\]]*)\]\(([^)]+)\))|(\[([^\]]+)\]\(([^)]+)\))|(\[([^\[\]]+)\])|(https?:\/\/[^\s<>\)]+)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -39,20 +42,32 @@ function parseInline(text: string): InlineToken[] {
     }
 
     if (match[1]) {
-      // Bold **text** or __text__
-      tokens.push({ type: 'bold', value: match[2] || match[3] });
+      // Bold+Italic ***text*** or ___text___
+      tokens.push({ type: 'bolditalic', value: match[2] || match[3] });
     } else if (match[4]) {
-      // Italic *text* or _text_
-      tokens.push({ type: 'italic', value: match[5] || match[6] });
+      // Bold **text** or __text__
+      tokens.push({ type: 'bold', value: match[5] || match[6] });
     } else if (match[7]) {
-      // Inline code `text`
-      tokens.push({ type: 'code', value: match[8] });
-    } else if (match[9]) {
-      // Link [text](url)
-      tokens.push({ type: 'link', text: match[10], url: match[11] });
+      // Italic *text* or _text_
+      tokens.push({ type: 'italic', value: match[8] || match[9] });
+    } else if (match[10]) {
+      // Strikethrough ~~text~~
+      tokens.push({ type: 'strikethrough', value: match[11] });
     } else if (match[12]) {
+      // Inline code `text`
+      tokens.push({ type: 'code', value: match[13] });
+    } else if (match[14]) {
+      // Image ![alt](url)
+      tokens.push({ type: 'image', alt: match[15], url: match[16] });
+    } else if (match[17]) {
+      // Link [text](url)
+      tokens.push({ type: 'link', text: match[18], url: match[19] });
+    } else if (match[20]) {
       // Placeholder [text]
-      tokens.push({ type: 'placeholder', value: match[13] });
+      tokens.push({ type: 'placeholder', value: match[21] });
+    } else if (match[22]) {
+      // Autolink
+      tokens.push({ type: 'link', text: match[22], url: match[22] });
     }
 
     lastIndex = match.index + match[0].length;
@@ -94,8 +109,8 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
-    // Heading
-    const headingMatch = line.match(/^(#{1,4})\s+(.+)/);
+    // Heading (h1-h6)
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     if (headingMatch) {
       blocks.push({ type: 'heading', level: headingMatch[1].length, inlines: parseInline(headingMatch[2]) });
       i++;
@@ -138,11 +153,22 @@ function parseBlocks(content: string): Block[] {
       continue;
     }
 
+    // Task list item (- [ ] or - [x])
+    const taskMatch = line.match(/^(\s*)[-*]\s+\[([ xX])\]\s+(.+)/);
+    if (taskMatch) {
+      const indent = Math.floor(taskMatch[1].length / 2);
+      const checked = taskMatch[2].toLowerCase() === 'x';
+      blocks.push({ type: 'list-item', inlines: parseInline(taskMatch[3]), ordered: false, indent, checked });
+      i++;
+      continue;
+    }
+
     // Ordered list item
     const orderedMatch = line.match(/^(\s*)\d+\.\s+(.+)/);
     if (orderedMatch) {
+      const indent = Math.floor(orderedMatch[1].length / 2);
       const num = parseInt(line.match(/^(\s*)(\d+)\./)?.[2] || '1', 10);
-      blocks.push({ type: 'list-item', inlines: parseInline(orderedMatch[2]), ordered: true, number: num });
+      blocks.push({ type: 'list-item', inlines: parseInline(orderedMatch[2]), ordered: true, number: num, indent });
       i++;
       continue;
     }
@@ -150,7 +176,8 @@ function parseBlocks(content: string): Block[] {
     // Unordered list item
     const unorderedMatch = line.match(/^(\s*)[-*]\s+(.+)/);
     if (unorderedMatch) {
-      blocks.push({ type: 'list-item', inlines: parseInline(unorderedMatch[2]), ordered: false });
+      const indent = Math.floor(unorderedMatch[1].length / 2);
+      blocks.push({ type: 'list-item', inlines: parseInline(unorderedMatch[2]), ordered: false, indent });
       i++;
       continue;
     }
@@ -195,6 +222,10 @@ const InlineText = React.memo(function InlineText({ tokens, color, codeColor, co
             return <Text key={i} style={{ fontWeight: '600' }}>{token.value}</Text>;
           case 'italic':
             return <Text key={i} style={{ fontStyle: 'italic' }}>{token.value}</Text>;
+          case 'bolditalic':
+            return <Text key={i} style={{ fontWeight: '600', fontStyle: 'italic' }}>{token.value}</Text>;
+          case 'strikethrough':
+            return <Text key={i} style={{ textDecorationLine: 'line-through' }}>{token.value}</Text>;
           case 'code':
             return (
               <Text
@@ -214,8 +245,16 @@ const InlineText = React.memo(function InlineText({ tokens, color, codeColor, co
             );
           case 'link':
             return (
-              <Text key={i} style={{ color, textDecorationLine: 'underline' }}>
-                {token.text}
+              <Pressable key={i} onPress={() => Linking.openURL(token.url)}>
+                <Text style={{ color, textDecorationLine: 'underline' }}>
+                  {token.text}
+                </Text>
+              </Pressable>
+            );
+          case 'image':
+            return (
+              <Text key={i} style={{ color, fontStyle: 'italic' }}>
+                [{token.alt || 'image'}]
               </Text>
             );
           case 'placeholder':
@@ -307,11 +346,16 @@ export const MarkdownRenderer = React.memo(function MarkdownRenderer({ content, 
                 key={index}
                 style={[
                   styles.listItem,
-                  { marginTop: index > 0 ? SPACING.xs : SPACING.sm },
+                  {
+                    marginTop: index > 0 ? SPACING.xs : SPACING.sm,
+                    paddingLeft: block.indent * 20,
+                  },
                 ]}
               >
                 <Text style={[TYPOGRAPHY.body, { color: mutedColor, minWidth: 20 }]}>
-                  {block.ordered ? `${block.number}.` : '\u2022'}
+                  {block.checked !== undefined
+                    ? block.checked ? '☑' : '☐'
+                    : block.ordered ? `${block.number}.` : '\u2022'}
                 </Text>
                 <Text style={[TYPOGRAPHY.body, { color: textColor, flex: 1, lineHeight: 24 }]}>
                   <InlineText tokens={block.inlines} color={codeColor} codeColor={codeColor} codeBg={codeBg} />

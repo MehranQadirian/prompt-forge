@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, interpolate, Extrapolation } from 'react-native-reanimated';
 import { usePromptStore } from '../../src/stores/promptStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
+import { useTemplateStore } from '../../src/stores/templateStore';
 import { useTheme } from '../../src/theme/useTheme';
 import { PromptCard } from '../../src/components/cards/PromptCard';
 import { useSwipeStore } from '../../src/stores/swipeStore';
@@ -109,6 +110,7 @@ export default function PromptsScreen() {
   } = usePromptStore();
 
   const { settings } = useSettingsStore();
+  const { addTemplate } = useTemplateStore();
 
   const handleSwipeAction = useCallback((action: SwipeAction, prompt: Prompt) => {
     switch (action) {
@@ -709,7 +711,18 @@ export default function PromptsScreen() {
             if (contextMenuPrompt) updatePromptColor(contextMenuPrompt.id, color);
             setContextMenuVisible(false);
           }}
-          onSaveAsTemplate={() => setContextMenuVisible(false)}
+          onSaveAsTemplate={(prompt) => {
+            addTemplate({
+              title: prompt.title,
+              content: prompt.content,
+              category: prompt.category,
+              tags: prompt.tags,
+              description: '',
+              isSystem: false,
+            });
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setContextMenuVisible(false);
+          }}
           onShare={(prompt) => {
             Share.share({ message: `${prompt.title}\n\n${prompt.content}` });
             setContextMenuVisible(false);
@@ -871,8 +884,8 @@ export default function PromptsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.sm,
+    paddingTop: SPACING.sm,
     paddingBottom: SPACING.lg,
   },
   catList: {
